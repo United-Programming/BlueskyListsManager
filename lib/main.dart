@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:bluesky/app_bsky_graph_get_starter_pack.dart';
 import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bskydart;
 import 'package:atproto/atproto.dart' as atp;
@@ -47,8 +46,6 @@ class Bsky {
   }
 }
 
-enum Status { loginStatus, getUserStatus, manageListsStatus, usersInListsStatus }
-
 class BList {
   late String name;
   late String at;
@@ -59,7 +56,6 @@ class BList {
   }
 }
 
-Status status = Status.loginStatus;
 Bsky? bsky;
 String loginHandle = "";
 String loginAppPass = "";
@@ -87,17 +83,7 @@ String getNow() {
 class _ListManagerPageState extends State<ListManagerPage> {
   @override
   Widget build(BuildContext context) {
-    if (loginHandle == "" || loginAppPass == "") {
-      status = Status.loginStatus;
-    }
     int tab = 0;
-    switch (status) {
-      case Status.loginStatus: tab = 0; break;
-      case Status.getUserStatus: tab = 1; break;
-      case Status.manageListsStatus: tab = 2; break;
-      case Status.usersInListsStatus: tab = 3; break;
-    }
-
     return Scaffold(
       body: 
         VerticalTabs(
@@ -113,7 +99,7 @@ class _ListManagerPageState extends State<ListManagerPage> {
           ], 
           contents: <Widget>[
             LoginTab(),
-            UserTab(),
+            GetListsTab(),
             ManageListsTab(),
             ManageUsersInListsTab(),
           ])
@@ -151,8 +137,6 @@ class _LoginTabState extends State<LoginTab> {
       appBar: AppBar(backgroundColor: Theme.of(context).colorScheme.inversePrimary, title: Text("Login"),
         actions: [
           Text(exception),
-          IconButton(onPressed: (){ getBluesky(context, false); },
-            tooltip: "Re-connect to Bluesky", icon: Icon(Icons.cached)),
           IconButton(onPressed: (){ exit(0); },
             tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
         ]),
@@ -162,12 +146,13 @@ class _LoginTabState extends State<LoginTab> {
           border: TableBorder.symmetric(),
           columnWidths: const <int, TableColumnWidth> {
             0: IntrinsicColumnWidth(),
-            1: IntrinsicColumnWidth()
+            1: IntrinsicColumnWidth(),
+            2: IntrinsicColumnWidth()
           },
           defaultVerticalAlignment: TableCellVerticalAlignment.middle,
           children: <TableRow>[
             TableRow(children: [
-              Text("Handle:"),
+              Text("Handle:"),SizedBox(width: 20,),
               SizedBox(width: 400, height: 48, child: TextField(
                 keyboardType: TextInputType.text,
                 autocorrect: false,
@@ -175,8 +160,10 @@ class _LoginTabState extends State<LoginTab> {
                 controller: _userHandleCtrl,
               )),
             ]),
+
             TableRow(children: [
-              Text("App Password:"),
+              Tooltip(message: "An app password is a unique code that Bluesky can generate for each app that you wish to link your account to.\nTo create one go to your Settings and then Privacy and Security.\nYou will find App passwords there. Add app password, provide a name and generate the password.\nBe sure you copyu the value, you will not be able to see it again.", child: Text("App Password:")),
+              SizedBox(width: 20,),
               Row(children: [
               SizedBox(width: 400, height: 48, child: TextField(
                 keyboardType: TextInputType.visiblePassword,
@@ -192,16 +179,19 @@ class _LoginTabState extends State<LoginTab> {
               }, icon: Icon(Icons.remove_red_eye)),
               ]),
             ]),
-            TableRow(children: [Text(""), SizedBox(height: 40,)]),
-            TableRow(children: [Text(""), 
-            ElevatedButton(
-              child: Text("Login"),
-              onPressed: () {
-                loginHandle = _userHandleCtrl.text;
-                loginAppPass = _userAppPwdCtrl.text;
-                getBluesky(context, true);
-              },
-            ),
+            TableRow(children: [Text(""), SizedBox(width: 20,), SizedBox(height: 40,)]),
+            TableRow(children: [
+              IconButton(onPressed: (){ getBluesky(context, false); },
+              tooltip: "Re-connect to Bluesky with previous handle and password.", icon: Icon(Icons.cached)),
+              SizedBox(width: 20,),
+              ElevatedButton(
+                child: Text("Login"),
+                onPressed: () {
+                  loginHandle = _userHandleCtrl.text;
+                  loginAppPass = _userAppPwdCtrl.text;
+                  getBluesky(context, true);
+                },
+              ),
             
             ]),
           ])
@@ -267,13 +257,13 @@ class _LoginTabState extends State<LoginTab> {
 }
 
 
-class UserTab extends StatefulWidget  {
-  const UserTab({super.key});
+class GetListsTab extends StatefulWidget  {
+  const GetListsTab({super.key});
 
   @override
-  State<UserTab> createState() => _UserTabState();
+  State<GetListsTab> createState() => _GetListsTabState();
 }
-class _UserTabState extends State<UserTab> {
+class _GetListsTabState extends State<GetListsTab> {
   final TextEditingController _userHandleCtrl = TextEditingController();
   final TextStyle ts = TextStyle(fontWeight: FontWeight.bold);
   String exception = "";
@@ -281,7 +271,7 @@ class _UserTabState extends State<UserTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Theme.of(context).colorScheme.inversePrimary, title: Text("User management"),
+      appBar: AppBar(backgroundColor: Theme.of(context).colorScheme.inversePrimary, title: Text("Get Lists"),
         actions: [
           Text(exception),
           IconButton(onPressed: (){ exit(0); },
@@ -508,7 +498,6 @@ class ManageListsTab extends StatefulWidget {
 }
 class _ManageListsTabState extends State<ManageListsTab> {
   final TextStyle ts = TextStyle(fontWeight: FontWeight.bold);
-  final TextEditingController _starterPackCtrl = TextEditingController();
   String exception = "";
   String? selectedListName, selectedListNameDst, selectedStarterPack;
   String numberOfEntries = "", copyingEntries = "", listClearing = "";
