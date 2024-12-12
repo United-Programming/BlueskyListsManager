@@ -61,7 +61,11 @@ String loginHandle = "";
 String loginAppPass = "";
 List<BList> allLists = [];
 List<BList> allStarterPacks = [];
-Table _listsTable = Table();
+Table _listsTableUserList = Table();
+Table _listsTableStarterPacks = Table();
+Table _listsTableUserInfo = Table();
+Table _listsTableMyLists = Table();
+final TextStyle boldStyle = TextStyle(fontWeight: FontWeight.bold);
 
 String cleanHandle(String handle) {
   handle = handle.trim();
@@ -93,13 +97,13 @@ class _ListManagerPageState extends State<ListManagerPage> {
           initialIndex: tab,
           tabs: <String>[
             "Login", 
-            "Get Lists",
+            "Get Info",
             "Manage Lists", 
             "Users in Lists"
           ], 
           contents: <Widget>[
             LoginTab(),
-            GetListsTab(),
+            GetInfoTab(),
             ManageListsTab(),
             ManageUsersInListsTab(),
           ])
@@ -257,76 +261,108 @@ class _LoginTabState extends State<LoginTab> {
 }
 
 
-class GetListsTab extends StatefulWidget  {
-  const GetListsTab({super.key});
+class GetInfoTab extends StatefulWidget  {
+  const GetInfoTab({super.key});
 
   @override
-  State<GetListsTab> createState() => _GetListsTabState();
+  State<GetInfoTab> createState() => _GetInfoTabState();
 }
-class _GetListsTabState extends State<GetListsTab> {
+class _GetInfoTabState extends State<GetInfoTab> {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: DefaultTabController(
+        length: 4,
+        child: Scaffold(
+          appBar: AppBar(
+            actions: [
+              IconButton(onPressed: (){ exit(0); },
+                tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
+            ],
+            bottom: const TabBar(
+              tabs: [
+                Text("Get user's lists"),
+                Text("Get user's starter packs"),
+                Text("Get user's info"),
+                Text("Get my lists"),
+              ],
+            ),
+            title: const Text('Get Lists'),
+          ),
+          body: const TabBarView(
+            children: [
+              GetUserListsTab(),
+              GetUserStarterPacksTab(),
+              GetUserInfoTab(),
+              GetMyListsTab(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class GetUserListsTab extends StatefulWidget  {
+  const GetUserListsTab({super.key});
+
+  @override
+  State<GetUserListsTab> createState() => _GetUserListsTabState();
+}
+class _GetUserListsTabState extends State<GetUserListsTab> {
   final TextEditingController _userHandleCtrl = TextEditingController();
-  final TextStyle ts = TextStyle(fontWeight: FontWeight.bold);
+  
+  String progress = "";
   String exception = "";
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Theme.of(context).colorScheme.inversePrimary, title: Text("Get Lists"),
-        actions: [
-          Text(exception),
-          IconButton(onPressed: (){ exit(0); },
-            tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
-        ]),
-      body: Center(child: Column(children: [ // ********** Get lists from user *******************************************************
-            const Text("   "),
+      body: Center(child: Column(children: [
+            SizedBox(height: 20,),
+            Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:FIXME>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
+            SizedBox(width: 600, height: 48, child: TextField(
+              controller: _userHandleCtrl,
+              keyboardType: TextInputType.text,
+              autocorrect: false,
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
+            ))),
+            SizedBox(height: 20,),
             Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
               ElevatedButton(
                 onPressed: () { getBlueskyListsForUser(); }, 
                 child: const Text("Get user's lists"),
               ),
-              ElevatedButton(
-                onPressed: () { getBlueskyStarterPacksListsForUser(); }, 
-                child: const Text("Get user's starter packs"),
-              ),
-              ElevatedButton(
-                onPressed: () { getBlueskyInfoForUser(); }, 
-                child: const Text("Get user's info"),
-              ),
-              ElevatedButton(
-                onPressed: () { getMyLists(); }, 
-                child: const Text("Get my lists"),
-              ),
             ],),
             SizedBox(height: 20,),
-            SizedBox(width: 600, height: 48, child: TextField(
-              controller: _userHandleCtrl,
-              keyboardType: TextInputType.text,
-              autocorrect: false,
-              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
-            )),
-            Text(exception),
+            Text(progress),
+            Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
             SizedBox(height: 20,),
-            _listsTable,
+            _listsTableUserList,
           ])),
     );
   }
 
 
   void getBlueskyListsForUser() async {
+    if (bsky == null) {
+      setState(() { exception = "Please login!"; });
+      return;
+    }
     String handle = cleanHandle(_userHandleCtrl.text);
     if (handle == "") {
       setState(() { exception = "Invalid handle!"; });
       return;
     }
-    setState(() { exception = "Collecting lists for user"; });
+    setState(() { progress = "Collecting lists for user"; });
     try {
       final lists = await bsky!.graph.getLists(actor: handle);
       List<TableRow> rows = [];
       for (var l in lists.data.lists) {
         var uri = l.uri.toString();
         TableRow row = TableRow(children: [
-          Text(l.name), 
+          TableCell(verticalAlignment: TableCellVerticalAlignment.middle, child: Text(l.name, textAlign: TextAlign.right,style:boldStyle)), 
           SizedBox(width: 800, height: 48, child: TextField(
             keyboardType: TextInputType.text,
             autocorrect: false,
@@ -344,34 +380,82 @@ class _GetListsTabState extends State<GetListsTab> {
         }
         if (missing) allLists.add(BList("${l.name} ($handle)", uri));
       }
-      _listsTable = Table(children: rows);
-      setState(() { exception = ""; });
+      _listsTableUserList = Table(children: rows, columnWidths: const <int, TableColumnWidth>{
+        0: IntrinsicColumnWidth(),
+        1: IntrinsicColumnWidth(),
+      },);
+      setState(() { exception = ""; progress = ""; });
     } on core.InvalidRequestException catch(ex) {
       var msg = ex.toString();
       int pos = msg.lastIndexOf('4');
       if (pos!=-1) {
         msg = "User not found: ${msg.substring(pos+3)}";
       }
-      setState(() { exception = msg; });
+      setState(() { exception = msg; progress = ""; });
     } catch(ex) {
-      setState(() { exception = "EXCEPTION!: $ex"; });
+      setState(() { exception = "EXCEPTION!: $ex"; progress = ""; });
     }
+  }
+}
+
+class GetUserStarterPacksTab extends StatefulWidget  {
+  const GetUserStarterPacksTab({super.key});
+
+  @override
+  State<GetUserStarterPacksTab> createState() => _GetUserStarterPacksState();
+}
+class _GetUserStarterPacksState extends State<GetUserStarterPacksTab> {
+  final TextEditingController _userHandleCtrl = TextEditingController();
+  String progress = "";
+  String exception = "";
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(child: Column(children: [
+            SizedBox(height: 20,),
+            Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:FIXME>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
+            SizedBox(width: 600, height: 48, child: TextField(
+              controller: _userHandleCtrl,
+              keyboardType: TextInputType.text,
+              autocorrect: false,
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
+            ))),
+            SizedBox(height: 20,),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+              ElevatedButton(
+                onPressed: () { getBlueskyStarterPacksListsForUser(); }, 
+                child: const Text("Get user's starter packs"),
+              ),
+            ],),
+            SizedBox(height: 20,),
+            Text(progress),
+            Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
+            SizedBox(height: 20,),
+            _listsTableStarterPacks,
+          ])),
+    );
   }
 
   void getBlueskyStarterPacksListsForUser() async {
+    if (bsky == null) {
+      setState(() { exception = "Please login!"; });
+      return;
+    }
     String handle = cleanHandle(_userHandleCtrl.text);
     if (handle == "") {
       setState(() { exception = "Invalid handle!"; });
       return;
     }
-    setState(() { exception = "Collecting starter packs for user"; });
+    setState(() { progress = "Collecting starter packs for user"; exception=""; });
     try {
       final lists = await bsky!.graph.getActorStarterPacks(actor: handle);
       List<TableRow> rows = [];
       for (var l in lists.data.starterPacks) {
         var uri = l.uri.toString();
         TableRow row = TableRow(children: [
-          Text(l.record.name), 
+          TableCell(verticalAlignment: TableCellVerticalAlignment.middle, child: Text(l.record.name, textAlign: TextAlign.right,style:boldStyle)), 
           SizedBox(width: 800, height: 48, child: TextField(
             keyboardType: TextInputType.text,
             autocorrect: false,
@@ -389,7 +473,10 @@ class _GetListsTabState extends State<GetListsTab> {
         }
         if (missing) allStarterPacks.add(BList(l.record.name, uri));
       }
-      _listsTable = Table(children: rows);
+      _listsTableStarterPacks = Table(children: rows, columnWidths: const <int, TableColumnWidth>{
+        0: IntrinsicColumnWidth(),
+        1: IntrinsicColumnWidth(),
+      },);
       setState(() { exception = ""; });
     } on core.InvalidRequestException catch(ex) {
       var msg = ex.toString();
@@ -402,31 +489,76 @@ class _GetListsTabState extends State<GetListsTab> {
       setState(() { exception = "EXCEPTION!: $ex"; });
     }
   }
+}
+
+class GetUserInfoTab extends StatefulWidget  {
+  const GetUserInfoTab({super.key});
+
+  @override
+  State<GetUserInfoTab> createState() => _GetUserInfoState();
+}
+class _GetUserInfoState extends State<GetUserInfoTab> {
+  final TextEditingController _userHandleCtrl = TextEditingController();
+  String progress = "";
+  String exception = "";
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(child: Column(children: [
+            SizedBox(height: 20,),
+            Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:FIXME>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
+            SizedBox(width: 600, height: 48, child: TextField(
+              controller: _userHandleCtrl,
+              keyboardType: TextInputType.text,
+              autocorrect: false,
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
+            ))),
+            SizedBox(height: 20,),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+              ElevatedButton(
+                onPressed: () { getBlueskyInfoForUser(); }, 
+                child: const Text("Get user's information"),
+              ),
+            ],),
+            SizedBox(height: 20,),
+            Text(progress),
+            Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
+            SizedBox(height: 20,),
+            _listsTableUserInfo,
+          ])),
+    );
+  }
 
   void getBlueskyInfoForUser() async {
+    if (bsky == null) {
+      setState(() { exception = "Please login!"; });
+      return;
+    }
     String handle = cleanHandle(_userHandleCtrl.text);
     if (handle == "") {
       setState(() { exception = "Invalid handle!"; });
       return;
     }
-    setState(() { exception = "Collecting info for user"; });
+    setState(() { progress = "Collecting info for user..."; exception=""; });
     try {
       final profile = await bsky!.bsky.actor.getProfile(actor: handle);
       final p = profile.data;
       List<TableRow> rows = [
-        TableRow(children: [ Text("Name: ", textAlign: TextAlign.right,style:ts),               SizedBox(width: 10), Text(p.displayName??"")]),
-        TableRow(children: [ Text("Hanlde: ", textAlign: TextAlign.right,style:ts),             SizedBox(width: 10), Text(p.handle)]),
-        TableRow(children: [ Text("Created at: ", textAlign: TextAlign.right,style:ts),         SizedBox(width: 10), Text(p.createdAt?.toIso8601String()??"")]),
-        TableRow(children: [ Text("DID:", textAlign: TextAlign.right,style:ts),                 SizedBox(width: 10), Text(p.did)]),
-        TableRow(children: [ Text("Follows: ", textAlign: TextAlign.right,style:ts),            SizedBox(width: 10), Text(p.followsCount.toString())]),
-        TableRow(children: [ Text("Followers: ", textAlign: TextAlign.right,style:ts),          SizedBox(width: 10), Text(p.followersCount.toString())]),
-        TableRow(children: [ Text("Numbers of Posts: ", textAlign: TextAlign.right,style:ts),   SizedBox(width: 10), Text(p.postsCount.toString())]),
-        TableRow(children: [ Text("Description: ", textAlign: TextAlign.right,style:ts),        SizedBox(width: 10), Text(p.description??"")]),
-        TableRow(children: [ Text("Is Blocking: ", textAlign: TextAlign.right,style:ts),        SizedBox(width: 10), Text(p.isBlocking?"Yes":"")]),
-        TableRow(children: [ Text("Is Muted: ", textAlign: TextAlign.right,style:ts),           SizedBox(width: 10), Text(p.isMuted?"Yes":"")]),
+        TableRow(children: [ Text("Name: ", textAlign: TextAlign.right,style:boldStyle),               SizedBox(width: 10), Text(p.displayName??"")]),
+        TableRow(children: [ Text("Hanlde: ", textAlign: TextAlign.right,style:boldStyle),             SizedBox(width: 10), Text(p.handle)]),
+        TableRow(children: [ Text("Created at: ", textAlign: TextAlign.right,style:boldStyle),         SizedBox(width: 10), Text(p.createdAt?.toIso8601String()??"")]),
+        TableRow(children: [ Text("DID:", textAlign: TextAlign.right,style:boldStyle),                 SizedBox(width: 10), Text(p.did)]),
+        TableRow(children: [ Text("Follows: ", textAlign: TextAlign.right,style:boldStyle),            SizedBox(width: 10), Text(p.followsCount.toString())]),
+        TableRow(children: [ Text("Followers: ", textAlign: TextAlign.right,style:boldStyle),          SizedBox(width: 10), Text(p.followersCount.toString())]),
+        TableRow(children: [ Text("Numbers of Posts: ", textAlign: TextAlign.right,style:boldStyle),   SizedBox(width: 10), Text(p.postsCount.toString())]),
+        TableRow(children: [ Text("Description: ", textAlign: TextAlign.right,style:boldStyle),        SizedBox(width: 10), Text(p.description??"")]),
+        TableRow(children: [ Text("Is Blocking: ", textAlign: TextAlign.right,style:boldStyle),        SizedBox(width: 10), Text(p.isBlocking?"Yes":"")]),
+        TableRow(children: [ Text("Is Muted: ", textAlign: TextAlign.right,style:boldStyle),           SizedBox(width: 10), Text(p.isMuted?"Yes":"")]),
       ];
       setState(() { exception = ""; 
-        _listsTable = Table(children: rows,
+        _listsTableUserInfo = Table(children: rows,
           columnWidths: const <int, TableColumnWidth>{
             0: FixedColumnWidth(250),
             1: IntrinsicColumnWidth(),
@@ -446,17 +578,54 @@ class _GetListsTabState extends State<GetListsTab> {
       setState(() { exception = "EXCEPTION!: $ex"; });
     }
   }
+}
+
+
+class GetMyListsTab extends StatefulWidget  {
+  const GetMyListsTab({super.key});
+
+  @override
+  State<GetMyListsTab> createState() => _GetMyListsState();
+}
+class _GetMyListsState extends State<GetMyListsTab> {
+  String progress = "";
+  String exception = "";
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(child: Column(children: [
+            SizedBox(height: 20,),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+              ElevatedButton(
+                onPressed: () { getMyLists(); }, 
+                child: const Text("Get my lists"),
+              ),
+            ],),
+            SizedBox(height: 20,),
+            Text(progress),
+            Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
+            SizedBox(height: 20,),
+            _listsTableMyLists,
+          ])),
+    );
+  }
 
   void getMyLists() async {
+    if (bsky == null) {
+      setState(() { exception = "Please login!"; });
+      return;
+    }
     String handle = bsky!.bsky.session!.did;
-    setState(() { exception = "Collecting lists for user"; });
+    setState(() { exception = ""; progress = "Collecting your lists..."; });
     try {
       final lists = await bsky!.graph.getLists(actor: handle);
       List<TableRow> rows = [];
       for (var l in lists.data.lists) {
         var uri = l.uri.toString();
         TableRow row = TableRow(children: [
-          Text(l.name), 
+          TableCell(verticalAlignment: TableCellVerticalAlignment.middle, child: Text(l.name, textAlign: TextAlign.right,style:boldStyle)), 
           SizedBox(width: 800, height: 48, child: TextField(
             keyboardType: TextInputType.text,
             autocorrect: false,
@@ -474,8 +643,11 @@ class _GetListsTabState extends State<GetListsTab> {
         }
         if (missing) allLists.add(BList("${l.name} ($handle)", uri));
       }
-      _listsTable = Table(children: rows);
-      setState(() { exception = ""; });
+      _listsTableMyLists = Table(children: rows, columnWidths: const <int, TableColumnWidth>{
+        0: IntrinsicColumnWidth(),
+        1: IntrinsicColumnWidth(),
+      },);
+      setState(() { exception = ""; progress = ""; });
     } on core.InvalidRequestException catch(ex) {
       var msg = ex.toString();
       int pos = msg.lastIndexOf('4');
@@ -488,7 +660,6 @@ class _GetListsTabState extends State<GetListsTab> {
     }
   }
 }
-
 
 class ManageListsTab extends StatefulWidget {
   const ManageListsTab({super.key});
