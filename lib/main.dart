@@ -620,6 +620,7 @@ class _GetMyListsState extends State<GetMyListsTab> {
       return;
     }
     String handle = bsky!.bsky.session!.did;
+    String user = bsky!.bsky.session!.handle;
     setState(() { exception = ""; progress = "Collecting your lists..."; });
     try {
       final lists = await bsky!.graph.getLists(actor: handle);
@@ -643,7 +644,7 @@ class _GetMyListsState extends State<GetMyListsTab> {
             break;
           }
         }
-        if (missing) allLists.add(BList("${l.name} ($handle)", uri));
+        if (missing) allLists.add(BList("${l.name} ($user)", uri));
       }
       _listsTableMyLists = Table(children: rows, columnWidths: const <int, TableColumnWidth>{
         0: IntrinsicColumnWidth(),
@@ -1080,8 +1081,7 @@ class _CleanListTabState extends State<CleanListTab> {
         final list = await bsky!.graph.getList(list: uri, cursor: cursor);
         count += list.data.items.length;
         for (var element in list.data.items) {
-          var res = await bsky!.repo.deleteRecord(uri: element.uri);
-          print(res);
+          await bsky!.repo.deleteRecord(uri: element.uri);
         }
         setState(() { progress = "Removing... ($count)"; });
         cursor = list.data.cursor;
@@ -1211,7 +1211,7 @@ class _CopyStarterPackIntoListTabState extends State<CopyStarterPackIntoListTab>
     }
     String atUriL = "";
     for (var l in allLists) {
-      if (l.name == selectedListNameDst) {
+      if (l.name == selectedDstListName) {
         atUriL = l.at;
         break;
       }
@@ -1274,8 +1274,6 @@ class _CopyStarterPackIntoListTabState extends State<CopyStarterPackIntoListTab>
 
 // ************** Users in Lists ***************************************************
 
-
-
 class ManageUsersInListsTab extends StatefulWidget {
   const ManageUsersInListsTab({super.key});
 
@@ -1283,38 +1281,61 @@ class ManageUsersInListsTab extends StatefulWidget {
   State<ManageUsersInListsTab> createState() => _ManageUsersInListsTabState();
 }
 class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
-  final TextEditingController _userHandleCtrl = TextEditingController();
-  final TextStyle ts = TextStyle(fontWeight: FontWeight.bold);
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: DefaultTabController(
+        length: 5,
+        child: Scaffold(
+          appBar: AppBar(
+            actions: [
+              IconButton(onPressed: (){ exit(0); },
+                tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
+            ],
+            bottom: const TabBar(
+              tabs: [
+                Text("Add user to list"),
+                Text("Remove user from list"),
+                Text("Check if user is in list"),
+                Text("Block all users in list"),
+                Text("Unlock all users in list"),
+              ],
+            ),
+            title: const Text('Manage Users in Lists'),
+          ),
+          body: const TabBarView(
+            children: [
+              AddUserToListTab(),
+              RemoveUserFromListTab(),
+              CheckIfUserIsInListTab(),
+              BlockAllUsersInListTab(),
+              UnblockAllUsersInListTab(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+final TextEditingController _userForListHandleCtrl = TextEditingController();
+
+class AddUserToListTab extends StatefulWidget  {
+  const AddUserToListTab({super.key});
+
+  @override
+  State<AddUserToListTab> createState() => _AddUserToListTabState();
+}
+class _AddUserToListTabState extends State<AddUserToListTab> {
   String exception = "";
-  String? selectedListName, selectedListNameDst;
-  String userStatus = "";
+  String? selectedListName;
+  String progress = "";
   bool alsoBlock = false;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(backgroundColor: Theme.of(context).colorScheme.inversePrimary, title: Text("Manage Users Lists"),
-        actions: [
-          Text(exception),
-          IconButton(onPressed: (){ exit(0); },
-            tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
-        ]),
-      body: Center(child: Column(children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-          ElevatedButton(
-            onPressed: () { addUserToList(); }, 
-            child: const Text("Add user to list"),
-          ),
-          ElevatedButton(
-            onPressed: () { removeUserFromList(); }, 
-            child: const Text("Remove user from list"),
-          ),
-          ElevatedButton(
-            onPressed: () { checkIfUserIsInList(); }, 
-            child: const Text("Check if user is in list"),
-          ),
-        ],),
-
+    return Center(child: Column(children: [
+      SizedBox(height: 20,),
         Table(
           columnWidths: const <int, TableColumnWidth>{
             0: IntrinsicColumnWidth(),
@@ -1323,18 +1344,20 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
           },
           defaultVerticalAlignment: TableCellVerticalAlignment.middle, children: [
           TableRow(children: [
-            Text("User(s) ID: ", textAlign: TextAlign.right,style:ts), SizedBox(width: 10),
+            Text("User(s) ID: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Tooltip(message: "Write the user handle in any form you like.\nYou can also add multiple entries, one for each line.", child: 
             SizedBox(width: 600, height: 4*24, child: TextField(
-              controller: _userHandleCtrl,
+              controller: _userForListHandleCtrl,
               maxLines: 32,
               keyboardType: TextInputType.multiline,
               autocorrect: false,
               decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle or DID. You can add multiple ones, one per line", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
-            )),
+            ))),
           ]),
 
           TableRow(children: [
-            Text("List: ", textAlign: TextAlign.right,style:ts), SizedBox(width: 10),
+            Text("List: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Tooltip(message: "Select the list where the user(s) will be added to.\nRemember to get the lists in the Get Info area.", child: 
             DropdownButton(items: allLists.map((BList list) {
               return DropdownMenuItem(value: list.name, child: Text(list.name) ); }).toList(), 
               onChanged: (val) {
@@ -1342,26 +1365,37 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
                   selectedListName = val;
                 }); 
               }, menuWidth: 800, value: selectedListName,
-            ),
+            )),
           ]),
 
           TableRow(children: [
-            Text("Also block/deblock: ", textAlign: TextAlign.right,style:ts), SizedBox(width: 10),
+            Tooltip(message: "If checked, the user(s) will also be blocked.", child: 
+            Text("Also block:", textAlign: TextAlign.right,style:boldStyle)), SizedBox(width: 10),
             TableCell(child: Align(alignment: Alignment.centerLeft, child:
+              Tooltip(message: "If checked, the user(s) will also be blocked.", child: 
               Checkbox(value: alsoBlock,
-              onChanged: (b) { 
-              if (b == null) { setState(() { alsoBlock = false; }); } 
-              else { setState(() { alsoBlock = b; }); }
-            }, tristate: false,))),
+                onChanged: (b) { 
+                  if (b == null) { setState(() { alsoBlock = false; }); } 
+                  else { setState(() { alsoBlock = b; }); }
+                }, tristate: false,)))),
           ]),
 
           TableRow(children: [
-            Text("Status: ", textAlign: TextAlign.right,style:ts), SizedBox(width: 10),
-            Text(userStatus)
+            Text("Progress: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Text(progress)
           ]),
-
-        ],)
-      ])));
+        ],),
+                SizedBox(height: 20,),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+          ElevatedButton(
+            onPressed: () { addUserToList(); }, 
+            child: const Text("Add the user in the list"),
+          ),
+        ],),
+        SizedBox(height: 20,),
+        Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
+      ]));
   }
 
   void addUserToList() async {
@@ -1369,7 +1403,7 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
       setState(() { exception = "Please login!"; });
       return;
     }
-    List<String> handles = _userHandleCtrl.text.split('\n');
+    List<String> handles = _userForListHandleCtrl.text.split('\n');
     if (handles.isEmpty || (handles.length == 1 && handles[0].isEmpty)) {
       setState(() { exception = "Please type the handle!"; });
       return;
@@ -1403,7 +1437,7 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
 
       numDone++;
 
-      setState(() { exception = ""; userStatus = "Adding $handle..."; });
+      setState(() { exception = ""; progress = "Adding $handle..."; });
       try {
         var did = (await bsky!.at.identity.resolveHandle(handle: handle)).data.did;
         var now = getNow();
@@ -1417,10 +1451,10 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
 
         if (alsoBlock) {
           var _ = await bsky?.graph.block(did: did, createdAt: DateTime.now());
-          setState(() { userStatus = "$handle Added and blocked"; });
+          setState(() { progress = "$handle Added and blocked"; });
         }
         else {
-          setState(() { userStatus = "$handle Added"; });
+          setState(() { progress = "$handle Added"; });
         }
       } on core.InvalidRequestException catch(ex) {
         var msg = ex.toString();
@@ -1438,11 +1472,90 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
       setState(() { exception = "Please type a valid handle!"; });
     }
     else if (alsoBlock) {
-      setState(() { userStatus = "$numDone Added and blocked"; });
+      setState(() { progress = "$numDone Added and blocked"; });
     }
     else {
-      setState(() { userStatus = "$numDone Added"; });
+      setState(() { progress = "$numDone Added"; });
     }
+  }
+}
+
+class RemoveUserFromListTab extends StatefulWidget  {
+  const RemoveUserFromListTab({super.key});
+
+  @override
+  State<RemoveUserFromListTab> createState() => _RemoveUserFromListTabState();
+}
+class _RemoveUserFromListTabState extends State<RemoveUserFromListTab> {
+  String exception = "";
+  String? selectedListName;
+  String progress = "";
+  bool alsoBlock = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Column(children: [
+      SizedBox(height: 20,),
+        Table(
+          columnWidths: const <int, TableColumnWidth>{
+            0: IntrinsicColumnWidth(),
+            1: IntrinsicColumnWidth(),
+            2: IntrinsicColumnWidth(),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle, children: [
+          TableRow(children: [
+            Text("User(s) ID: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Tooltip(message: "Write the user handle in any form you like.\nYou can also add multiple entries, one for each line.", child: 
+            SizedBox(width: 600, height: 4*24, child: TextField(
+              controller: _userForListHandleCtrl,
+              maxLines: 32,
+              keyboardType: TextInputType.multiline,
+              autocorrect: false,
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle or DID. You can add multiple ones, one per line", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
+            ))),
+          ]),
+
+          TableRow(children: [
+            Text("List: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Tooltip(message: "Select the list where the user(s) should be removed from.\nRemember to get the lists in the Get Info area.", child: 
+            DropdownButton(items: allLists.map((BList list) {
+              return DropdownMenuItem(value: list.name, child: Text(list.name) ); }).toList(), 
+              onChanged: (val) {
+                setState(() {
+                  selectedListName = val;
+                }); 
+              }, menuWidth: 800, value: selectedListName,
+            )),
+          ]),
+
+          TableRow(children: [
+            Tooltip(message: "If checked, the user(s) will also be deblocked.", child: 
+            Text("Also unblock:", textAlign: TextAlign.right,style:boldStyle)), SizedBox(width: 10),
+            TableCell(child: Align(alignment: Alignment.centerLeft, child:
+              Tooltip(message: "If checked, the user(s) will also be deblocked.", child: 
+              Checkbox(value: alsoBlock,
+                onChanged: (b) { 
+                  if (b == null) { setState(() { alsoBlock = false; }); } 
+                  else { setState(() { alsoBlock = b; }); }
+                }, tristate: false,)))),
+          ]),
+
+          TableRow(children: [
+            Text("Progress: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Text(progress)
+          ]),
+        ],),
+                SizedBox(height: 20,),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+          ElevatedButton(
+            onPressed: () { removeUserFromList(); }, 
+            child: const Text("Remove the user from the list"),
+          ),
+        ],),
+        SizedBox(height: 20,),
+        Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
+      ]));
   }
 
   void removeUserFromList() async {
@@ -1450,7 +1563,7 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
       setState(() { exception = "Please login!"; });
       return;
     }
-    List<String> handles = _userHandleCtrl.text.split('\n');
+    List<String> handles = _userForListHandleCtrl.text.split('\n');
     if (handles.isEmpty || (handles.length == 1 && handles[0].isEmpty)) {
       setState(() { exception = "Please type the handle!"; });
       return;
@@ -1473,7 +1586,7 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
 
     List<String> dids = [];
     List<String> didsUnblock = [];
-    setState(() { exception = "Converting accounts to dids..."; });
+    setState(() { progress = "Converting accounts to dids..."; });
     for (var handle in handles) {
       if (handle.trim().isEmpty) continue;
       var forError = handle;
@@ -1497,12 +1610,12 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
         final list = await bsky!.graph.getList(list: uriList, cursor: cursor, limit: 100);
         cursor = list.data.cursor;
         count += list.data.items.length;
-        setState(() { userStatus = "Removing users... (${dids.length})"; });
+        setState(() { progress = "Removing users... (${dids.length})"; });
 
         for (var user in list.data.items) {
           for (var did in dids) {
             if (user.subject.did == did) {
-              setState(() { userStatus = "Found user"; });
+              setState(() { progress = "Found user"; });
               var _ = await bsky!.at.repo.deleteRecord(uri: user.uri);
               dids.remove(did);
               numRemoved++;
@@ -1518,7 +1631,7 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
         }
       }
 
-      setState(() { exception = ""; userStatus = "Removed $numRemoved actors"; });
+      setState(() { exception = ""; progress = "Removed $numRemoved actors"; });
 
       if (alsoBlock) {
         cursor = null;
@@ -1527,13 +1640,13 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
         while (count < 25000) {
           var blocks = await bsky?.graph.getBlocks(cursor: cursor, limit: 100);
           if (blocks == null) break;
-          setState(() { userStatus = "Unblocking users... (${didsUnblock.length})"; });
+          setState(() { progress = "Unblocking users... (${didsUnblock.length})"; });
           cursor = blocks.data.cursor;
           count += blocks.data.blocks.length;
           for (var block in blocks.data.blocks) {
             for (var did in dids) {
               if (block.did == did) {
-                setState(() { userStatus = "Found user"; });
+                setState(() { progress = "Found user"; });
                 var rkey = block.viewer.blocking?.rkey;
                 core.AtUri delUri = core.AtUri.make(block.handle, "app.bsky.graph.block", rkey);
                 await bsky!.at.repo.deleteRecord(uri: delUri);
@@ -1551,7 +1664,7 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
           }
         }
 
-        setState(() { userStatus = "$numRemoved Removed and $numUnblocked unblocked"; });
+        setState(() { progress = "$numRemoved Removed and $numUnblocked unblocked"; });
       }
 
     } on core.InvalidRequestException catch(ex) {
@@ -1564,7 +1677,72 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
     } catch(ex) {
       setState(() { exception = ex.toString(); });
     }
-    
+  }
+}
+
+class CheckIfUserIsInListTab extends StatefulWidget  {
+  const CheckIfUserIsInListTab({super.key});
+
+  @override
+  State<CheckIfUserIsInListTab> createState() => _CheckIfUserIsInListTabState();
+}
+class _CheckIfUserIsInListTabState extends State<CheckIfUserIsInListTab> {
+  String exception = "";
+  String? selectedListName;
+  String progress = "";
+  bool alsoBlock = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Column(children: [
+      SizedBox(height: 20,),
+        Table(
+          columnWidths: const <int, TableColumnWidth>{
+            0: IntrinsicColumnWidth(),
+            1: IntrinsicColumnWidth(),
+            2: IntrinsicColumnWidth(),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle, children: [
+          TableRow(children: [
+            Text("User(s) ID: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:FIXME>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
+            SizedBox(width: 600, height: 48, child: TextField(
+              controller: _userForListHandleCtrl,
+              keyboardType: TextInputType.text,
+              autocorrect: false,
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
+            ))),
+          ]),
+
+          TableRow(children: [
+            Text("List: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Tooltip(message: "Select the list to check if the user is inside.\nRemember to get the lists in the Get Info area.", child: 
+            DropdownButton(items: allLists.map((BList list) {
+              return DropdownMenuItem(value: list.name, child: Text(list.name) ); }).toList(), 
+              onChanged: (val) {
+                setState(() {
+                  selectedListName = val;
+                }); 
+              }, menuWidth: 800, value: selectedListName,
+            )),
+          ]),
+
+          TableRow(children: [
+            Text("Progress: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Text(progress)
+          ]),
+        ],),
+                SizedBox(height: 20,),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+          ElevatedButton(
+            onPressed: () { checkIfUserIsInList(); }, 
+            child: const Text("Check user"),
+          ),
+        ],),
+        SizedBox(height: 20,),
+        Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
+      ]));
   }
 
   void checkIfUserIsInList() async {
@@ -1572,8 +1750,8 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
       setState(() { exception = "Please login!"; });
       return;
     }
-    List<String> handles = _userHandleCtrl.text.split('\n');
-    if (handles.isEmpty || (handles.length == 1 && handles[0].isEmpty)) {
+    String handle = _userForListHandleCtrl.text;
+    if (handle.isEmpty) {
       setState(() { exception = "Please type the handle!"; });
       return;
     }
@@ -1593,7 +1771,6 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
       return;
     }
 
-    var handle = handles[0];
     var forError = handle;
     handle = cleanHandle(handle);
     if (handle == "") {
@@ -1601,7 +1778,7 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
       return;
     }
 
-    setState(() { exception = ""; userStatus = "Checking if $handle is in the list..."; });
+    setState(() { exception = ""; progress = "Checking if $handle is in the list..."; });
     try {
       var did = (await bsky!.at.identity.resolveHandle(handle: handle)).data.did;
       core.AtUri uriList = core.AtUri(atUri);
@@ -1614,16 +1791,16 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
         count += list.data.items.length;
         for (var user in list.data.items) {
           if (user.subject.did == did) {
-            setState(() { userStatus = "$handle is in the list in position $pos."; });
+            setState(() { progress = "$handle is in the list in position $pos."; });
             return;
           }
           pos++;
         }
-        setState(() { exception = ""; userStatus = "Checking if $handle is in the list... ($count)"; });
+        setState(() { exception = ""; progress = "Checking if $handle is in the list... ($count)"; });
         if (cursor == null) break;
       }
 
-      setState(() { userStatus = "$handle is NOT in the list!"; });
+      setState(() { progress = "$handle is NOT in the list!"; });
     } on core.InvalidRequestException catch(ex) {
       var msg = ex.toString();
       int pos = msg.lastIndexOf('4');
@@ -1637,4 +1814,263 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
   }
 }
 
+class BlockAllUsersInListTab extends StatefulWidget  {
+  const BlockAllUsersInListTab({super.key});
 
+  @override
+  State<BlockAllUsersInListTab> createState() => _BlockAllUsersInListTabState();
+}
+class _BlockAllUsersInListTabState extends State<BlockAllUsersInListTab> {
+  String exception = "";
+  String? selectedListName;
+  String progress = "";
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Column(children: [
+      SizedBox(height: 20,),
+        Table(
+          columnWidths: const <int, TableColumnWidth>{
+            0: IntrinsicColumnWidth(),
+            1: IntrinsicColumnWidth(),
+            2: IntrinsicColumnWidth(),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle, children: [
+
+          TableRow(children: [
+            Text("List: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Tooltip(message: "Select the list of people to block.\nRemember to get the lists in the Get Info area.", child: 
+            DropdownButton(items: allLists.map((BList list) {
+              return DropdownMenuItem(value: list.name, child: Text(list.name) ); }).toList(), 
+              onChanged: (val) {
+                setState(() {
+                  selectedListName = val;
+                }); 
+              }, menuWidth: 800, value: selectedListName,
+            )),
+          ]),
+
+          TableRow(children: [
+            Text("Progress: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Text(progress)
+          ]),
+        ],),
+                SizedBox(height: 20,),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+          ElevatedButton(
+            onPressed: () { blockAllUsersFromTheList(); }, 
+            child: const Text("Block user from the list"),
+          ),
+        ],),
+        SizedBox(height: 20,),
+        Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
+      ]));
+  }
+
+  void blockAllUsersFromTheList() async {
+    if (bsky == null) {
+      setState(() { exception = "Please login!"; });
+      return;
+    }
+    if (selectedListName?.isEmpty??true) {
+      setState(() { exception = "Select the list!"; });
+      return;
+    }
+    String atUri = "";
+    for (var l in allLists) {
+      if (l.name == selectedListName) {
+        atUri = l.at;
+        break;
+      }
+    }
+    if (atUri == "") {
+      setState(() { exception = "Invalid AT Uri for the list!"; });
+      return;
+    }
+
+    int numDone = 0;
+    setState(() { exception = ""; progress = "Blocking users in the list..."; });
+    try {
+      String? cursor;
+      int count = 0;
+      core.AtUri uriList = core.AtUri(atUri);
+      while (count < 25000) {
+        setState(() { exception = ""; progress = "Collecting users from the list... ($count)"; });
+        final list = await bsky!.graph.getList(list: uriList, cursor: cursor, limit: 100);
+        cursor = list.data.cursor;
+        count += list.data.items.length;
+        for (var user in list.data.items) {
+          var _ = await bsky?.graph.block(did: user.subject.did, createdAt: DateTime.now());
+          setState(() { progress = "${user.subject.handle} blocked"; });
+          numDone++;
+        }
+        if (cursor == null) break;
+      }
+    } on core.InvalidRequestException catch(ex) {
+      var msg = ex.toString();
+      int pos = msg.lastIndexOf('4');
+      if (pos!=-1) {
+        msg = "Invalid request: ${msg.substring(pos+3)}";
+      }
+      setState(() { exception = msg; });
+    } catch(ex) {
+      setState(() { exception = ex.toString(); });
+    }
+
+    if (numDone == 0) {
+      setState(() { exception = "Nobody found in the list!"; });
+    }
+    else {
+      setState(() { progress = "$numDone blocked."; });
+    }
+  }
+}
+
+class UnblockAllUsersInListTab extends StatefulWidget  {
+  const UnblockAllUsersInListTab({super.key});
+
+  @override
+  State<UnblockAllUsersInListTab> createState() => _UnblockAllUsersInListTabState();
+}
+class _UnblockAllUsersInListTabState extends State<UnblockAllUsersInListTab> {
+  String exception = "";
+  String? selectedListName;
+  String progress = "";
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Column(children: [
+      SizedBox(height: 20,),
+        Table(
+          columnWidths: const <int, TableColumnWidth>{
+            0: IntrinsicColumnWidth(),
+            1: IntrinsicColumnWidth(),
+            2: IntrinsicColumnWidth(),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle, children: [
+
+          TableRow(children: [
+            Text("List: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Tooltip(message: "Select the list of people to unblock.\nRemember to get the lists in the Get Info area.", child: 
+            DropdownButton(items: allLists.map((BList list) {
+              return DropdownMenuItem(value: list.name, child: Text(list.name) ); }).toList(), 
+              onChanged: (val) {
+                setState(() {
+                  selectedListName = val;
+                }); 
+              }, menuWidth: 800, value: selectedListName,
+            )),
+          ]),
+
+          TableRow(children: [
+            Text("Progress: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Text(progress)
+          ]),
+        ],),
+                SizedBox(height: 20,),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+          ElevatedButton(
+            onPressed: () { unblockAllUsersFromTheList(); }, 
+            child: const Text("Unblock user(s) from the list"),
+          ),
+        ],),
+        SizedBox(height: 20,),
+        Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
+      ]));
+  }
+
+  void unblockAllUsersFromTheList() async {
+    if (bsky == null) {
+      setState(() { exception = "Please login!"; });
+      return;
+    }
+    if (selectedListName?.isEmpty??true) {
+      setState(() { exception = "Select the list!"; });
+      return;
+    }
+    String atUri = "";
+    for (var l in allLists) {
+      if (l.name == selectedListName) {
+        atUri = l.at;
+        break;
+      }
+    }
+    if (atUri == "") {
+      setState(() { exception = "Invalid AT Uri for the list!"; });
+      return;
+    }
+
+    List<String> didsUnblock = [];
+    List<String> dids = [];
+    int numDone = 0;
+    setState(() { exception = ""; progress = "Blocking users in the list..."; });
+    try {
+      String? cursor;
+      int count = 0;
+      core.AtUri uriList = core.AtUri(atUri);
+      while (count < 25000) {
+        setState(() { exception = ""; progress = "Collecting users from the list... ($count)"; });
+        final list = await bsky!.graph.getList(list: uriList, cursor: cursor, limit: 100);
+        cursor = list.data.cursor;
+        count += list.data.items.length;
+        for (var user in list.data.items) {
+          dids.add(user.subject.did);
+          didsUnblock.add(user.subject.did);
+          numDone++;
+        }
+        if (cursor == null) break;
+      }
+
+      cursor = null;
+      count = 0;
+      int numUnblocked = 0;
+      int total = dids.length;
+      while (count < 25000) {
+        var blocks = await bsky?.graph.getBlocks(cursor: cursor, limit: 100);
+        if (blocks == null) break;
+        setState(() { progress = "Unblocking users... (${didsUnblock.length})"; });
+        cursor = blocks.data.cursor;
+        count += blocks.data.blocks.length;
+        for (var block in blocks.data.blocks) {
+          for (var did in dids) {
+            if (block.did == did) {
+              setState(() { progress = "Found user"; });
+              var rkey = block.viewer.blocking?.rkey;
+              core.AtUri delUri = core.AtUri.make(block.handle, "app.bsky.graph.block", rkey);
+              await bsky!.at.repo.deleteRecord(uri: delUri);
+              await bsky?.graph.unmuteActor(actor: did);
+              didsUnblock.remove(did);
+              numUnblocked++;
+            }
+          }
+          if (total == numUnblocked || didsUnblock.isEmpty) {
+            break;
+          }
+        }
+        if (total == numUnblocked || didsUnblock.isEmpty || cursor == null) {
+          break;
+        }
+      }
+
+      if (numDone == 0) {
+        setState(() { exception = "Nobody found in the list!"; });
+      }
+      else {
+        setState(() { progress = "$numDone found in the list and $numUnblocked unblocked."; });
+      }
+
+    } on core.InvalidRequestException catch(ex) {
+      var msg = ex.toString();
+      int pos = msg.lastIndexOf('4');
+      if (pos!=-1) {
+        msg = "Invalid request: ${msg.substring(pos+3)}";
+      }
+      setState(() { exception = msg; });
+    } catch(ex) {
+      setState(() { exception = ex.toString(); });
+    }
+
+  }
+}
