@@ -111,6 +111,9 @@ class _ListManagerPageState extends State<ListManagerPage> {
   }
 }
 
+// ************** Login ***************************************************
+
+
 class LoginTab extends StatefulWidget  {
   const LoginTab({super.key});
 
@@ -260,6 +263,7 @@ class _LoginTabState extends State<LoginTab> {
   }
 }
 
+// ************** Get Info ***************************************************
 
 class GetInfoTab extends StatefulWidget  {
   const GetInfoTab({super.key});
@@ -303,6 +307,8 @@ class _GetInfoTabState extends State<GetInfoTab> {
   }
 }
 
+final TextEditingController _userInfoHandleCtrl = TextEditingController();
+
 class GetUserListsTab extends StatefulWidget  {
   const GetUserListsTab({super.key});
 
@@ -310,8 +316,6 @@ class GetUserListsTab extends StatefulWidget  {
   State<GetUserListsTab> createState() => _GetUserListsTabState();
 }
 class _GetUserListsTabState extends State<GetUserListsTab> {
-  final TextEditingController _userHandleCtrl = TextEditingController();
-  
   String progress = "";
   String exception = "";
 
@@ -322,7 +326,7 @@ class _GetUserListsTabState extends State<GetUserListsTab> {
             SizedBox(height: 20,),
             Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:FIXME>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
             SizedBox(width: 600, height: 48, child: TextField(
-              controller: _userHandleCtrl,
+              controller: _userInfoHandleCtrl,
               keyboardType: TextInputType.text,
               autocorrect: false,
               decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
@@ -350,7 +354,7 @@ class _GetUserListsTabState extends State<GetUserListsTab> {
       setState(() { exception = "Please login!"; });
       return;
     }
-    String handle = cleanHandle(_userHandleCtrl.text);
+    String handle = cleanHandle(_userInfoHandleCtrl.text);
     if (handle == "") {
       setState(() { exception = "Invalid handle!"; });
       return;
@@ -405,7 +409,6 @@ class GetUserStarterPacksTab extends StatefulWidget  {
   State<GetUserStarterPacksTab> createState() => _GetUserStarterPacksState();
 }
 class _GetUserStarterPacksState extends State<GetUserStarterPacksTab> {
-  final TextEditingController _userHandleCtrl = TextEditingController();
   String progress = "";
   String exception = "";
 
@@ -416,7 +419,7 @@ class _GetUserStarterPacksState extends State<GetUserStarterPacksTab> {
             SizedBox(height: 20,),
             Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:FIXME>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
             SizedBox(width: 600, height: 48, child: TextField(
-              controller: _userHandleCtrl,
+              controller: _userInfoHandleCtrl,
               keyboardType: TextInputType.text,
               autocorrect: false,
               decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
@@ -443,7 +446,7 @@ class _GetUserStarterPacksState extends State<GetUserStarterPacksTab> {
       setState(() { exception = "Please login!"; });
       return;
     }
-    String handle = cleanHandle(_userHandleCtrl.text);
+    String handle = cleanHandle(_userInfoHandleCtrl.text);
     if (handle == "") {
       setState(() { exception = "Invalid handle!"; });
       return;
@@ -498,7 +501,6 @@ class GetUserInfoTab extends StatefulWidget  {
   State<GetUserInfoTab> createState() => _GetUserInfoState();
 }
 class _GetUserInfoState extends State<GetUserInfoTab> {
-  final TextEditingController _userHandleCtrl = TextEditingController();
   String progress = "";
   String exception = "";
 
@@ -509,7 +511,7 @@ class _GetUserInfoState extends State<GetUserInfoTab> {
             SizedBox(height: 20,),
             Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:FIXME>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
             SizedBox(width: 600, height: 48, child: TextField(
-              controller: _userHandleCtrl,
+              controller: _userInfoHandleCtrl,
               keyboardType: TextInputType.text,
               autocorrect: false,
               decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
@@ -536,7 +538,7 @@ class _GetUserInfoState extends State<GetUserInfoTab> {
       setState(() { exception = "Please login!"; });
       return;
     }
-    String handle = cleanHandle(_userHandleCtrl.text);
+    String handle = cleanHandle(_userInfoHandleCtrl.text);
     if (handle == "") {
       setState(() { exception = "Invalid handle!"; });
       return;
@@ -661,6 +663,8 @@ class _GetMyListsState extends State<GetMyListsTab> {
   }
 }
 
+// ************** Manage Lists ***************************************************
+
 class ManageListsTab extends StatefulWidget {
   const ManageListsTab({super.key});
 
@@ -668,41 +672,57 @@ class ManageListsTab extends StatefulWidget {
   State<ManageListsTab> createState() => _ManageListsTabState();
 }
 class _ManageListsTabState extends State<ManageListsTab> {
-  final TextStyle ts = TextStyle(fontWeight: FontWeight.bold);
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: DefaultTabController(
+        length: 4,
+        child: Scaffold(
+          appBar: AppBar(
+            actions: [
+              IconButton(onPressed: (){ exit(0); },
+                tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
+            ],
+            bottom: const TabBar(
+              tabs: [
+                Text("Count"),
+                Text("Copy"),
+                Text("Clear"),
+                Text("Copy from Starter Pack"),
+              ],
+            ),
+            title: const Text('Get Lists'),
+          ),
+          body: const TabBarView(
+            children: [
+              CountUserInListsTab(),
+              CopyOneListIntoAnotherTab(),
+              CleanListTab(),
+              CopyStarterPackIntoListTab(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CountUserInListsTab extends StatefulWidget  {
+  const CountUserInListsTab({super.key});
+
+  @override
+  State<CountUserInListsTab> createState() => _CountUserInListsTabState();
+}
+class _CountUserInListsTabState extends State<CountUserInListsTab> {
+  String progress = "";
   String exception = "";
-  String? selectedListName, selectedListNameDst, selectedStarterPack;
-  String numberOfEntries = "", copyingEntries = "", listClearing = "";
-  bool alsoBlock = false;
+  String? selectedListName;
+  String numberOfEntries = "";
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Theme.of(context).colorScheme.inversePrimary, title: Text("Manage Lists"),
-        actions: [
-          Text(exception),
-          IconButton(onPressed: (){ exit(0); },
-            tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
-        ]),
       body: Center(child: Column(children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-          ElevatedButton(
-            onPressed: () { countNumberOfEntries(); }, 
-            child: const Text("Count number of users in list"),
-          ),
-          ElevatedButton(
-            onPressed: () { copyListIntoDestination(); }, 
-            child: const Text("Copy contents of first list into second"),
-          ),
-          ElevatedButton(
-            onPressed: () { clearListConfirmation(context); }, 
-            child: const Text("Clear all users from list"),
-          ),
-          ElevatedButton(
-            onPressed: () { copyFromStarterPack(); }, 
-            child: const Text("Copy from starter pack to destination list"),
-          ),
-        ],),
-
         Table(
           columnWidths: const <int, TableColumnWidth>{
             0: IntrinsicColumnWidth(),
@@ -713,7 +733,8 @@ class _ManageListsTabState extends State<ManageListsTab> {
 
           children: [
           TableRow(children: [
-            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("List: ", textAlign: TextAlign.right,style:ts))), SizedBox(width: 10),
+            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("List: ", textAlign: TextAlign.right,style:boldStyle))), SizedBox(width: 10),
+            Tooltip(message: "Pick the list you wish to count\nRemember to collect the lists in the Get Info area.", child: 
             DropdownButton(items: allLists.map((BList list) {
               return DropdownMenuItem(value: list.name, child: Text(list.name) ); }).toList(), 
               onChanged: (val) {
@@ -721,63 +742,35 @@ class _ManageListsTabState extends State<ManageListsTab> {
                   selectedListName = val;
                 }); 
               }, menuWidth: 800, value: selectedListName,
-            ),
+            )),
           ]),
 
           TableRow(children: [
-            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Number of entries: ", textAlign: TextAlign.right,style:ts))), SizedBox(width: 10),
+            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Number of entries: ", textAlign: TextAlign.right,style:boldStyle))), SizedBox(width: 10),
             Text(numberOfEntries)
           ]),
+        ]),
 
-          TableRow(children: [
-            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Starter pack: ", textAlign: TextAlign.right,style:ts))), SizedBox(width: 10),
-            DropdownButton(items: allStarterPacks.map((BList list) {
-              return DropdownMenuItem(value: list.name, child: Text(list.name) ); }).toList(), 
-              onChanged: (val) {
-                setState(() {
-                  selectedStarterPack = val;
-                }); 
-              }, menuWidth: 800, value: selectedStarterPack,
-            ),
-          ]),
-
-          TableRow(children: [
-            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Destination List: ", textAlign: TextAlign.right,style:ts))), SizedBox(width: 10),
-            DropdownButton(items: allLists.map((BList list) {
-              return DropdownMenuItem(value: list.name, child: Text(list.name) ); }).toList(), 
-              onChanged: (val) {
-                setState(() {
-                  selectedListNameDst = val;
-                }); 
-              }, menuWidth: 800, value: selectedListNameDst,
-            ),
-          ]),
-
-          TableRow(children: [
-            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Also block: ", textAlign: TextAlign.right,style:ts))), SizedBox(width: 10),
-            TableCell(child: Align(alignment: Alignment.centerLeft, child:
-              Checkbox(value: alsoBlock,
-              onChanged: (b) { 
-              if (b == null) { setState(() { alsoBlock = false; }); } 
-              else { setState(() { alsoBlock = b; }); }
-            }, tristate: false,))),
-          ]),
-
-          TableRow(children: [
-            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Copying: ", textAlign: TextAlign.right,style:ts))), SizedBox(width: 10),
-            Text(copyingEntries)
-          ]),
-
-          TableRow(children: [
-            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Clearing: ", textAlign: TextAlign.right,style:ts))), SizedBox(width: 10),
-            Text(listClearing)
-          ]),
-
-        ],)
-      ])));
+        SizedBox(height: 20,),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+          ElevatedButton(
+            onPressed: () { countNumberOfEntries(); }, 
+            child: const Text("Count number of users in list"),
+          ),
+        ],),
+        SizedBox(height: 20,),
+        Text(progress),
+        Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
+      ])),
+    );
   }
 
   void countNumberOfEntries() async {
+    if (bsky == null) {
+      setState(() { exception = "Please login!"; });
+      return;
+    }
     if (selectedListName?.isEmpty??true) {
       setState(() { exception = "Select the source list!"; });
       return;
@@ -806,19 +799,114 @@ class _ManageListsTabState extends State<ManageListsTab> {
         if (cursor == null) break;
       }
       setState(() { numberOfEntries = "$count entries"; });
+    } on core.InvalidRequestException catch(ex) {
+      var msg = ex.toString();
+      int pos = msg.lastIndexOf('4');
+      if (pos!=-1) {
+        msg = "Invalid request: ${msg.substring(pos+3)}";
+      }
+      setState(() { exception = msg; });
     } catch(ex) {
       setState(() { exception = "EXCEPTION!: $ex"; });
     }
   }
+}
+
+
+class CopyOneListIntoAnotherTab extends StatefulWidget  {
+  const CopyOneListIntoAnotherTab({super.key});
+
+  @override
+  State<CopyOneListIntoAnotherTab> createState() => _CopyOneListIntoAnotherTabState();
+}
+class _CopyOneListIntoAnotherTabState extends State<CopyOneListIntoAnotherTab> {
+  String progress = "";
+  String exception = "";
+  String? selectedSrcListName, selectedDstListName;
+  bool alsoBlock = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(child: Column(children: [
+        Table(
+          columnWidths: const <int, TableColumnWidth>{
+            0: IntrinsicColumnWidth(),
+            1: IntrinsicColumnWidth(),
+            2: IntrinsicColumnWidth(),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+
+          children: [
+          TableRow(children: [
+            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Source List: ", textAlign: TextAlign.right,style:boldStyle))), SizedBox(width: 10),
+            Tooltip(message: "Pick the source list you wish to copy in the destination\nRemember to collect the lists in the Get Info area.", child: 
+            DropdownButton(items: allLists.map((BList list) {
+              return DropdownMenuItem(value: list.name, child: Text(list.name) ); }).toList(), 
+              onChanged: (val) {
+                setState(() {
+                  selectedSrcListName = val;
+                }); 
+              }, menuWidth: 800, value: selectedSrcListName,
+            )),
+          ]),
+
+          TableRow(children: [
+            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Destination List: ", textAlign: TextAlign.right,style:boldStyle))), SizedBox(width: 10),
+            Tooltip(message: "Pick the destination list to fill with the source data \nRemember to collect the lists in the Get Info area.", child: 
+            DropdownButton(items: allLists.map((BList list) {
+              return DropdownMenuItem(value: list.name, child: Text(list.name) ); }).toList(), 
+              onChanged: (val) {
+                setState(() {
+                  selectedDstListName = val;
+                }); 
+              }, menuWidth: 800, value: selectedDstListName,
+            )),
+          ]),
+
+          TableRow(children: [
+            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Also block: ", textAlign: TextAlign.right,style:boldStyle))), SizedBox(width: 10),
+            TableCell(child: Align(alignment: Alignment.centerLeft, child:
+            Tooltip(message: "If checked, all entries that will be copied from the source to the destination will also be blocked.", child: 
+              Checkbox(value: alsoBlock,
+              onChanged: (b) { 
+              if (b == null) { setState(() { alsoBlock = false; }); } 
+              else { setState(() { alsoBlock = b; }); }
+            }, tristate: false,)))),
+          ]),
+
+          TableRow(children: [
+            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Progress: ", textAlign: TextAlign.right,style:boldStyle))), SizedBox(width: 10),
+            Text(progress)
+          ]),
+        ]),
+
+        SizedBox(height: 20,),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+          ElevatedButton(
+            onPressed: () { copyListIntoDestination(); }, 
+            child: const Text("Begin the copy"),
+          ),
+        ],),
+        SizedBox(height: 20,),
+        Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
+      ])),
+    );
+  }
 
   void copyListIntoDestination() async {
-    if (selectedListName?.isEmpty??true) {
+    if (bsky == null) {
+      setState(() { exception = "Please login!"; });
+      return;
+    }
+    if (selectedSrcListName?.isEmpty??true) {
       setState(() { exception = "Select the source list!"; });
       return;
     }
     String atUriSrc = "";
     for (var l in allLists) {
-      if (l.name == selectedListName) {
+      if (l.name == selectedSrcListName) {
         atUriSrc = l.at;
         break;
       }
@@ -827,22 +915,22 @@ class _ManageListsTabState extends State<ManageListsTab> {
       setState(() { exception = "Invalid AT Uri for the source list!"; });
       return;
     }
-    if (selectedListName?.isEmpty??true) {
+    if (selectedDstListName?.isEmpty??true) {
       setState(() { exception = "Select the destination list!"; });
       return;
     }
     String atUriDst = "";
     for (var l in allLists) {
-      if (l.name == selectedListNameDst) {
+      if (l.name == selectedDstListName) {
         atUriDst = l.at;
         break;
       }
     }
     if (atUriDst == "") {
-      setState(() { exception = "Invalid AT Uri for the destination list!"; });
+      setState(() { exception = "Invalid AT Uri for the destination list!"; progress = ""; });
       return;
     }
-    setState(() { copyingEntries = "Copying members from source list to destination list..."; exception = ""; });
+    setState(() { progress = "Copying members from source list to destination list..."; exception = ""; });
     try {
       String? cursor;
       var count = 0;
@@ -852,36 +940,124 @@ class _ManageListsTabState extends State<ManageListsTab> {
         final src = await bsky!.graph.getList(list: uri, cursor: cursor);
         for(var i = 0; i < src.data.items.length; i++) {
           var usrDid = src.data.items[i].subject.did;
-          var now = getNow();
           var record = {
             r"$type": "app.bsky.graph.listitem",
             "subject": usrDid,
             "list": atUriDst,
-            "createdAt": now
+            "createdAt": getNow()
           };
           var _ = await bsky!.repo.createRecord(collection: collId, record: record);
           if (alsoBlock) {
             var _ = await bsky?.graph.block(did: usrDid, createdAt: DateTime.now());
-            setState(() { copyingEntries = "Merged and Blocked ${count+i}..."; });
+            setState(() { progress = "Merged and Blocked ${count+i}..."; });
           }
           else {
-            setState(() { copyingEntries = "Merged ${count+i}..."; });
+            setState(() { progress = "Merged ${count+i}..."; });
           }
         }
         count += src.data.items.length;
-        setState(() { copyingEntries = "Merged $count..."; });
+        setState(() { progress = "Merged $count..."; });
         cursor = src.data.cursor;
         if (cursor == null) break;
       }
-      setState(() { copyingEntries = "Complted! $count merged"; });
+      setState(() { progress = "Completed! $count merged"; });
+      } on core.InvalidRequestException catch(ex) {
+        var msg = ex.toString();
+        int pos = msg.lastIndexOf('4');
+        if (pos!=-1) {
+          msg = "Invalid request: ${msg.substring(pos+3)}";
+        }
+        setState(() { exception = msg; });
     } catch(ex) {
       setState(() { exception = ex.toString(); });
     }
   }
+}
 
-  void clearListConfirmation(BuildContext context) async {
+class CleanListTab extends StatefulWidget  {
+  const CleanListTab({super.key});
+
+  @override
+  State<CleanListTab> createState() => _CleanListTabState();
+}
+class _CleanListTabState extends State<CleanListTab> {
+  String progress = "";
+  String exception = "";
+  String? selectedListName;
+  bool toBeConfirmed = false;
+  bool confirmed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(child: Column(children: [
+        Table(
+          columnWidths: const <int, TableColumnWidth>{
+            0: IntrinsicColumnWidth(),
+            1: IntrinsicColumnWidth(),
+            2: IntrinsicColumnWidth(),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+
+          children: [
+          TableRow(children: [
+            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("List to clean: ", textAlign: TextAlign.right,style:boldStyle))), SizedBox(width: 10),
+            Tooltip(message: "Pick the list you wish to clean\nRemember to collect the lists in the Get Info area.", child: 
+            DropdownButton(items: allLists.map((BList list) {
+              return DropdownMenuItem(value: list.name, child: Text(list.name) ); }).toList(), 
+              onChanged: (val) {
+                setState(() {
+                  selectedListName = val;
+                }); 
+              }, menuWidth: 800, value: selectedListName,
+            )),
+          ]),
+
+          TableRow(children: [
+            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Progress: ", textAlign: TextAlign.right,style:boldStyle))), SizedBox(width: 10),
+            Text(progress)
+          ]),
+        ]),
+
+        SizedBox(height: 20,),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+          ElevatedButton(
+            style: const ButtonStyle(backgroundColor: WidgetStatePropertyAll<Color>(Colors.red)),
+            onPressed: () {  setState(() { toBeConfirmed = true;}); }, 
+            child: const Text("Begin the clean"),
+          ),
+        ],),
+
+        Visibility(visible: toBeConfirmed, child: SizedBox(height: 20,)),
+        Visibility(visible: toBeConfirmed, child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, 
+          children: [
+            Text("Do you confirm you wish to delete the list: $selectedListName?"),
+            ElevatedButton(
+              style: const ButtonStyle(backgroundColor: WidgetStatePropertyAll<Color>(Colors.red)),
+              onPressed: () { clearList(); }, 
+              child: const Text("Yes, clean it up!"),
+            ),
+            ElevatedButton(
+              onPressed: () { setState(() { toBeConfirmed = false;}); }, 
+              child: const Text("Better not..."),
+            ),
+        ],)),
+
+        SizedBox(height: 20,),
+        Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
+      ])),
+    );
+  }
+
+  void clearList() async {
+    setState(() { toBeConfirmed = false; });
+    if (bsky == null) {
+      setState(() { exception = "Please login!"; });
+      return;
+    }
     if (selectedListName?.isEmpty??true) {
-      setState(() { exception = "Select the source list!"; });
+      setState(() { exception = "Select the list!"; });
       return;
     }
     String atUri = "";
@@ -895,65 +1071,125 @@ class _ManageListsTabState extends State<ManageListsTab> {
       setState(() { exception = "Invalid AT Uri for the list!"; });
       return;
     }
-    clearListConfirmationBuild(atUri, context);
-  }
-
-  void clearListConfirmationBuild(String atUri, BuildContext context) {  
-    Widget cancelButton = ElevatedButton(
-      child: const Text("Cancel"),
-      onPressed:  () {
-        Navigator.of(context).pop(); // dismiss dialog
-      },
-    );
-    Widget continueButton = ElevatedButton(
-      style: const ButtonStyle(backgroundColor: WidgetStatePropertyAll<Color>(Colors.red)),
-      child: const Text("Clean it up!"),
-      onPressed:  () {
-        Navigator.of(context).pop(); // dismiss dialog
-        clearListConfirmed(atUri);
-      },
-    );
-    AlertDialog alert = AlertDialog(
-      title: const Text("Confirm cleaning up of list"),
-      content: Text("Are you sure you want to remove all entries from the list\n$selectedListName?"),
-      actions: [
-        cancelButton,
-        continueButton,
-      ],
-    );
-    // show the dialog
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return alert;
-      },
-    );
-  }
-
-  void clearListConfirmed(String atUri) async {
-    setState(() { listClearing = "Removing entries..."; exception = ""; });
+    setState(() { progress = "Removing entries..."; exception = ""; });
     try {
       var count = 0;
       core.AtUri uri = core.AtUri(atUri);
       String? cursor;
-      while (count < 5000) {
+      while (count < 25000) {
         final list = await bsky!.graph.getList(list: uri, cursor: cursor);
         count += list.data.items.length;
         for (var element in list.data.items) {
-          bsky!.repo.deleteRecord(uri: element.uri);
+          var res = await bsky!.repo.deleteRecord(uri: element.uri);
+          print(res);
         }
-        setState(() { listClearing = "Removing... ($count)"; });
+        setState(() { progress = "Removing... ($count)"; });
         cursor = list.data.cursor;
         if (cursor == null) break;
       }
-      setState(() { listClearing = "Removed $count entries"; });
+      setState(() { progress = "Removed $count entries"; toBeConfirmed = false; });
+      } on core.InvalidRequestException catch(ex) {
+        var msg = ex.toString();
+        int pos = msg.lastIndexOf('4');
+        if (pos!=-1) {
+          msg = "Invalid request: ${msg.substring(pos+3)}";
+        }
+        setState(() { exception = msg; });
     } catch(ex) {
-      setState(() { exception = "EXCEPTION!: $ex"; });
+      setState(() { exception = "EXCEPTION!: $ex"; toBeConfirmed = false; });
     }
+  }
+}
 
+
+class CopyStarterPackIntoListTab extends StatefulWidget  {
+  const CopyStarterPackIntoListTab({super.key});
+
+  @override
+  State<CopyStarterPackIntoListTab> createState() => _CopyStarterPackIntoListTabState();
+}
+class _CopyStarterPackIntoListTabState extends State<CopyStarterPackIntoListTab> {
+  String progress = "";
+  String exception = "";
+  String? selectedStarterPack, selectedDstListName;
+  bool alsoBlock = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(child: Column(children: [
+        Table(
+          columnWidths: const <int, TableColumnWidth>{
+            0: IntrinsicColumnWidth(),
+            1: IntrinsicColumnWidth(),
+            2: IntrinsicColumnWidth(),
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+
+          children: [
+          TableRow(children: [
+            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Source List: ", textAlign: TextAlign.right,style:boldStyle))), SizedBox(width: 10),
+            Tooltip(message: "Pick the Starter Pack you wish to copy in the destination list\nRemember to collect the lists and starter packs in the Get Info area.", child: 
+            DropdownButton(items: allStarterPacks.map((BList list) {
+              return DropdownMenuItem(value: list.name, child: Text(list.name) ); }).toList(), 
+              onChanged: (val) {
+                setState(() {
+                  selectedStarterPack = val;
+                }); 
+              }, menuWidth: 800, value: selectedStarterPack,
+            )),
+          ]),
+
+          TableRow(children: [
+            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Destination List: ", textAlign: TextAlign.right,style:boldStyle))), SizedBox(width: 10),
+            Tooltip(message: "Pick the destination list to fill with the source data \nRemember to collect the lists in the Get Info area.", child: 
+            DropdownButton(items: allLists.map((BList list) {
+              return DropdownMenuItem(value: list.name, child: Text(list.name) ); }).toList(), 
+              onChanged: (val) {
+                setState(() {
+                  selectedDstListName = val;
+                }); 
+              }, menuWidth: 800, value: selectedDstListName,
+            )),
+          ]),
+
+          TableRow(children: [
+            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Also block: ", textAlign: TextAlign.right,style:boldStyle))), SizedBox(width: 10),
+            TableCell(child: Align(alignment: Alignment.centerLeft, child:
+            Tooltip(message: "If checked, all entries that will be copied from the source to the destination will also be blocked.", child: 
+              Checkbox(value: alsoBlock,
+              onChanged: (b) { 
+              if (b == null) { setState(() { alsoBlock = false; }); } 
+              else { setState(() { alsoBlock = b; }); }
+            }, tristate: false,)))),
+          ]),
+
+          TableRow(children: [
+            SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Progress: ", textAlign: TextAlign.right,style:boldStyle))), SizedBox(width: 10),
+            Text(progress)
+          ]),
+        ]),
+
+        SizedBox(height: 20,),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+          ElevatedButton(
+            onPressed: () { copyFromStarterPack(); }, 
+            child: const Text("Begin the copy"),
+          ),
+        ],),
+        SizedBox(height: 20,),
+        Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
+      ])),
+    );
   }
 
+
   void copyFromStarterPack() async {
+    if (bsky == null) {
+      setState(() { exception = "Please login!"; });
+      return;
+    }
     if (selectedStarterPack?.isEmpty??true) {
       setState(() { exception = "Select the starter pack!"; });
       return;
@@ -969,7 +1205,7 @@ class _ManageListsTabState extends State<ManageListsTab> {
       setState(() { exception = "Invalid AT Uri for the list!"; });
       return;
     }
-    if (selectedListNameDst?.isEmpty??true) {
+    if (selectedDstListName?.isEmpty??true) {
       setState(() { exception = "Select the destination list!"; });
       return;
     }
@@ -984,7 +1220,7 @@ class _ManageListsTabState extends State<ManageListsTab> {
       setState(() { exception = "Invalid AT Uri for the list!"; });
       return;
     }
-    setState(() { copyingEntries = "Collecting..."; exception = ""; });
+    setState(() { progress = "Collecting..."; exception = ""; });
 
     try {
       var starterPack = await bsky!.graph.getStarterPack(starterPack: core.AtUri(atUriSP));
@@ -1012,10 +1248,10 @@ class _ManageListsTabState extends State<ManageListsTab> {
           var _ = await bsky!.repo.createRecord(collection: collId, record: record);
           if (alsoBlock) {
             var _ = await bsky?.graph.block(did: usrDid, createdAt: DateTime.now());
-            setState(() { copyingEntries = "Merged and Blocked ${count+i}..."; });
+            setState(() { progress = "Merged and Blocked ${count+i}..."; });
           }
           else {
-            setState(() { copyingEntries = "Merged ${count+i}..."; });
+            setState(() { progress = "Merged ${count+i}..."; });
           }
         }
 
@@ -1023,11 +1259,21 @@ class _ManageListsTabState extends State<ManageListsTab> {
         if (cursor == null) break;
       }
 
+      } on core.InvalidRequestException catch(ex) {
+        var msg = ex.toString();
+        int pos = msg.lastIndexOf('4');
+        if (pos!=-1) {
+          msg = "Invalid request: ${msg.substring(pos+3)}";
+        }
+        setState(() { exception = msg; });
     } catch(ex) {
       setState(() { exception = "EXCEPTION: $ex"; });
     }
   }
 }
+
+// ************** Users in Lists ***************************************************
+
 
 
 class ManageUsersInListsTab extends StatefulWidget {
@@ -1119,6 +1365,10 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
   }
 
   void addUserToList() async {
+    if (bsky == null) {
+      setState(() { exception = "Please login!"; });
+      return;
+    }
     List<String> handles = _userHandleCtrl.text.split('\n');
     if (handles.isEmpty || (handles.length == 1 && handles[0].isEmpty)) {
       setState(() { exception = "Please type the handle!"; });
@@ -1196,6 +1446,10 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
   }
 
   void removeUserFromList() async {
+    if (bsky == null) {
+      setState(() { exception = "Please login!"; });
+      return;
+    }
     List<String> handles = _userHandleCtrl.text.split('\n');
     if (handles.isEmpty || (handles.length == 1 && handles[0].isEmpty)) {
       setState(() { exception = "Please type the handle!"; });
@@ -1314,6 +1568,10 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
   }
 
   void checkIfUserIsInList() async {
+    if (bsky == null) {
+      setState(() { exception = "Please login!"; });
+      return;
+    }
     List<String> handles = _userHandleCtrl.text.split('\n');
     if (handles.isEmpty || (handles.length == 1 && handles[0].isEmpty)) {
       setState(() { exception = "Please type the handle!"; });

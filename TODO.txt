@@ -1,6 +1,7 @@
 Add a way to save preferences (atUris)
 Store the expiration of the session, and auto-reconnect using some sort of timer
 Change the UI stile, adding sub-section, that will show only the widgets we need, with a button on the bottom to perform the action
+Add a settings page-> add the max count onj lists and remove the hardcoded value 25000
 
 -------- DONE ------------------
 !Add ability to copy starter pack users to a list
