@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:bluesky/bluesky.dart' as bskydart;
 import 'package:atproto/atproto.dart' as atp;
 import 'package:atproto_core/atproto_core.dart' as core;
+import 'package:flutter/services.dart';
 import 'package:flutter_vertical_tab_bar/flutter_vertical_tab_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart' as shared_prefs;
 
@@ -99,13 +100,15 @@ class _ListManagerPageState extends State<ListManagerPage> {
             "Login", 
             "Get Info",
             "Manage Lists", 
-            "Users in Lists"
+            "Users in Lists",
+            "Settings"
           ], 
           contents: <Widget>[
             LoginTab(),
             GetInfoTab(),
             ManageListsTab(),
             ManageUsersInListsTab(),
+            SettingsTab(),
           ])
     );
   }
@@ -279,6 +282,7 @@ class _GetInfoTabState extends State<GetInfoTab> {
         length: 4,
         child: Scaffold(
           appBar: AppBar(
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary, 
             actions: [
               IconButton(onPressed: (){ exit(0); },
                 tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
@@ -324,7 +328,7 @@ class _GetUserListsTabState extends State<GetUserListsTab> {
     return Scaffold(
       body: Center(child: Column(children: [
             SizedBox(height: 20,),
-            Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:FIXME>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
+            Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:plc:4xxvirkcait46ycqabcdefgh>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
             SizedBox(width: 600, height: 48, child: TextField(
               controller: _userInfoHandleCtrl,
               keyboardType: TextInputType.text,
@@ -417,7 +421,7 @@ class _GetUserStarterPacksState extends State<GetUserStarterPacksTab> {
     return Scaffold(
       body: Center(child: Column(children: [
             SizedBox(height: 20,),
-            Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:FIXME>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
+            Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:plc:4xxvirkcait46ycqabcdefgh>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
             SizedBox(width: 600, height: 48, child: TextField(
               controller: _userInfoHandleCtrl,
               keyboardType: TextInputType.text,
@@ -509,7 +513,7 @@ class _GetUserInfoState extends State<GetUserInfoTab> {
     return Scaffold(
       body: Center(child: Column(children: [
             SizedBox(height: 20,),
-            Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:FIXME>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
+            Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:plc:4xxvirkcait46ycqabcdefgh>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
             SizedBox(width: 600, height: 48, child: TextField(
               controller: _userInfoHandleCtrl,
               keyboardType: TextInputType.text,
@@ -680,6 +684,7 @@ class _ManageListsTabState extends State<ManageListsTab> {
         length: 4,
         child: Scaffold(
           appBar: AppBar(
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary, 
             actions: [
               IconButton(onPressed: (){ exit(0); },
                 tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
@@ -792,7 +797,7 @@ class _CountUserInListsTabState extends State<CountUserInListsTab> {
       String? cursor;
       var count = 0;
       core.AtUri uri = core.AtUri(atUri);
-      while (count < 25000) {
+      while (count < maxListEntries) {
         final list = await bsky!.graph.getList(list: uri, cursor: cursor, limit: 100);
         cursor = list.data.cursor;
         count += list.data.items.length;
@@ -937,7 +942,7 @@ class _CopyOneListIntoAnotherTabState extends State<CopyOneListIntoAnotherTab> {
       var count = 0;
       core.NSID collId = core.NSID.parse("app.bsky.graph.listitem");
       core.AtUri uri = core.AtUri(atUriSrc);
-      while (count < 25000) {
+      while (count < maxListEntries) {
         final src = await bsky!.graph.getList(list: uri, cursor: cursor);
         for(var i = 0; i < src.data.items.length; i++) {
           var usrDid = src.data.items[i].subject.did;
@@ -1077,7 +1082,7 @@ class _CleanListTabState extends State<CleanListTab> {
       var count = 0;
       core.AtUri uri = core.AtUri(atUri);
       String? cursor;
-      while (count < 25000) {
+      while (count < maxListEntries) {
         final list = await bsky!.graph.getList(list: uri, cursor: cursor);
         count += list.data.items.length;
         for (var element in list.data.items) {
@@ -1233,7 +1238,7 @@ class _CopyStarterPackIntoListTabState extends State<CopyStarterPackIntoListTab>
       int count = 0;
       String? cursor;
       core.NSID collId = core.NSID.parse("app.bsky.graph.listitem");
-      while (count < 25000) {
+      while (count < maxListEntries) {
         final list = await bsky!.graph.getList(list: uri, cursor: cursor, limit: 100);
         cursor = list.data.cursor;
 
@@ -1288,6 +1293,7 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
         length: 5,
         child: Scaffold(
           appBar: AppBar(
+            backgroundColor: Theme.of(context).colorScheme.inversePrimary, 
             actions: [
               IconButton(onPressed: (){ exit(0); },
                 tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
@@ -1606,7 +1612,7 @@ class _RemoveUserFromListTabState extends State<RemoveUserFromListTab> {
       int count = 0;
       int numRemoved = 0;
       int total = dids.length;
-      while (count < 25000) {
+      while (count < maxListEntries) {
         final list = await bsky!.graph.getList(list: uriList, cursor: cursor, limit: 100);
         cursor = list.data.cursor;
         count += list.data.items.length;
@@ -1637,7 +1643,7 @@ class _RemoveUserFromListTabState extends State<RemoveUserFromListTab> {
         cursor = null;
         count = 0;
         int numUnblocked = 0;
-        while (count < 25000) {
+        while (count < maxListEntries) {
           var blocks = await bsky?.graph.getBlocks(cursor: cursor, limit: 100);
           if (blocks == null) break;
           setState(() { progress = "Unblocking users... (${didsUnblock.length})"; });
@@ -1705,7 +1711,7 @@ class _CheckIfUserIsInListTabState extends State<CheckIfUserIsInListTab> {
           defaultVerticalAlignment: TableCellVerticalAlignment.middle, children: [
           TableRow(children: [
             Text("User(s) ID: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
-            Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:FIXME>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
+            Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:plc:4xxvirkcait46ycqabcdefgh>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
             SizedBox(width: 600, height: 48, child: TextField(
               controller: _userForListHandleCtrl,
               keyboardType: TextInputType.text,
@@ -1785,7 +1791,7 @@ class _CheckIfUserIsInListTabState extends State<CheckIfUserIsInListTab> {
       String? cursor;
       int count = 0;
       int pos = 0;
-      while (count < 25000) {
+      while (count < maxListEntries) {
         final list = await bsky!.graph.getList(list: uriList, cursor: cursor, limit: 100);
         cursor = list.data.cursor;
         count += list.data.items.length;
@@ -1895,7 +1901,7 @@ class _BlockAllUsersInListTabState extends State<BlockAllUsersInListTab> {
       String? cursor;
       int count = 0;
       core.AtUri uriList = core.AtUri(atUri);
-      while (count < 25000) {
+      while (count < maxListEntries) {
         setState(() { exception = ""; progress = "Collecting users from the list... ($count)"; });
         final list = await bsky!.graph.getList(list: uriList, cursor: cursor, limit: 100);
         cursor = list.data.cursor;
@@ -2010,7 +2016,7 @@ class _UnblockAllUsersInListTabState extends State<UnblockAllUsersInListTab> {
       String? cursor;
       int count = 0;
       core.AtUri uriList = core.AtUri(atUri);
-      while (count < 25000) {
+      while (count < maxListEntries) {
         setState(() { exception = ""; progress = "Collecting users from the list... ($count)"; });
         final list = await bsky!.graph.getList(list: uriList, cursor: cursor, limit: 100);
         cursor = list.data.cursor;
@@ -2027,7 +2033,7 @@ class _UnblockAllUsersInListTabState extends State<UnblockAllUsersInListTab> {
       count = 0;
       int numUnblocked = 0;
       int total = dids.length;
-      while (count < 25000) {
+      while (count < maxListEntries) {
         var blocks = await bsky?.graph.getBlocks(cursor: cursor, limit: 100);
         if (blocks == null) break;
         setState(() { progress = "Unblocking users... (${didsUnblock.length})"; });
@@ -2074,3 +2080,69 @@ class _UnblockAllUsersInListTabState extends State<UnblockAllUsersInListTab> {
 
   }
 }
+
+// ************** Settings ***************************************************
+
+int maxListEntries = 25000;
+
+class SettingsTab extends StatefulWidget  {
+  const SettingsTab({super.key});
+
+  @override
+  State<SettingsTab> createState() => _SettingsTabState();
+}
+class _SettingsTabState extends State<SettingsTab> {
+  final TextEditingController _maxListEntries = TextEditingController(text: "$maxListEntries");
+  String exception = "";
+  bool passwordNotVisible = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(backgroundColor: Theme.of(context).colorScheme.inversePrimary, title: Text("Settings"),
+        actions: [
+          Text(exception),
+          IconButton(onPressed: (){ exit(0); },
+            tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
+        ]),
+      body: Center(child: Column(children: [
+        Table(
+          border: TableBorder.symmetric(),
+          columnWidths: const <int, TableColumnWidth> {
+            0: IntrinsicColumnWidth(),
+            1: IntrinsicColumnWidth(),
+            2: IntrinsicColumnWidth()
+          },
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: <TableRow>[
+            TableRow(children: [
+              Text("Max items from a list:"),SizedBox(width: 20,),
+              Row(children: [
+              SizedBox(width: 400, height: 48, child: TextField(
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "Max list entries", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.account_circle)),
+                controller: _maxListEntries,
+                inputFormatters: [ FilteringTextInputFormatter.digitsOnly],
+                onChanged: (value) {
+                  maxListEntries = int.tryParse(value) ?? 25000;
+                },
+              )),
+              IconButton( icon: Icon(Icons.arrow_upward), onPressed: () {
+                maxListEntries += 1000;
+                setState(() { _maxListEntries.text = "$maxListEntries"; });
+              }),
+              IconButton( icon: Icon(Icons.arrow_downward), onPressed: () {
+                maxListEntries -= 1000;
+                if (maxListEntries < 150) maxListEntries = 150;
+                setState(() { _maxListEntries.text = "$maxListEntries"; });
+              }),
+              ])
+            ]),
+
+            TableRow(children: [Text(""), SizedBox(width: 20,), SizedBox(height: 40,)]),
+          ])
+    ])));
+  }
+
+}
+
