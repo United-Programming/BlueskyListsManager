@@ -11,22 +11,162 @@ void main() {
   runApp(const BskyListManager());
 }
 
-class BskyListManager extends StatelessWidget {
-  const BskyListManager({super.key});
+// ************ Theme *********************************
 
-  // This widget is the root of your application.
+class ThemeStuff {
+  static ThemeStuff? _instance;
+  static ThemeStuff get instance {
+    _instance ??= ThemeStuff._init();
+    return _instance!;
+  }
+
+  ThemeStuff._init() {
+    theme.value = themeLight;
+  }
+
+  static Color getBackground(double perc) {
+    var background = _instance!.theme.value.dialogBackgroundColor;
+    return Color.fromARGB(255, (background.red * perc).round(), (background.green * perc).round(), (background.blue * perc).round());
+  }
+
+  static Color getScaffold(double perc) {
+    var background = _instance!.theme.value.scaffoldBackgroundColor;
+    return Color.fromARGB(255, (background.red * perc).round(), (background.green * perc).round(), (background.blue * perc).round());
+  }
+
+  static Color getForeground() {
+    return _instance!.theme.value.primaryColor;
+  }
+
+  static Color getHighlight(bool half) {
+    var color = _instance!.theme.value.highlightColor;
+    if (half) {
+      if (color.red < 127) {
+        return Color.fromARGB(255, (color.red + 127).round(), (color.green + 127).round(), (color.blue + 127).round());
+      }
+      else {
+        return Color.fromARGB(255, (color.red * .5).round(), (color.green * .5).round(), (color.blue * .5).round());
+      }
+    }
+    return color; // Not halved
+  }
+
+  static Color getPrimary(bool half) {
+    var color = _instance!.theme.value.primaryColor;
+    if (half) {
+      int red = (color.red < 127) ? (color.red + 60).round() : (color.red * .75).round();
+      int green = (color.green < 127) ? (color.green + 60).round() : (color.green * .75).round();
+      int blue = (color.blue < 127) ? (color.blue + 60).round() : (color.blue * .75).round();
+      return Color.fromARGB(255, red, green, blue);
+    }
+    return color; // Not halved
+  }
+
+  static BoxDecoration getDecoration() {
+    return instance.decoration.value;
+  }
+
+  ValueNotifier<ThemeData> theme = ValueNotifier<ThemeData>(ThemeData.dark());
+  ValueNotifier<BoxDecoration> decoration = ValueNotifier<BoxDecoration>(decorationNAFO);
+
+  void updateValue(ThemeData themes, BoxDecoration decorations) {
+    theme.value = themes;
+    decoration.value = decorations;
+  }
+}
+
+ThemeData themeLight = ThemeData.light().copyWith(
+  primaryColor: Colors.black,
+  dialogBackgroundColor: Color.fromARGB(255, 200, 200, 255),
+);
+BoxDecoration decorationLight = BoxDecoration(image: DecorationImage(image: AssetImage("assets/images/Light.png"), alignment: Alignment.bottomRight, fit: BoxFit.scaleDown, ));
+
+ThemeData themeDark = ThemeData.dark().copyWith(
+  primaryColor: Colors.white,
+  dialogBackgroundColor: Color.fromARGB(255, 0, 10, 40),
+);
+BoxDecoration decorationDark = BoxDecoration(image: DecorationImage(image: AssetImage("assets/images/Dark.png"), alignment: Alignment.bottomRight, fit: BoxFit.scaleDown, ));
+
+TextStyle nts = TextStyle(color: Color.fromARGB(255, 255, 221, 0), fontSize: 14);
+TextStyle nhs = TextStyle(color: Color.fromARGB(255, 200, 190, 0), fontSize: 12, fontStyle: FontStyle.italic);
+TextTheme ntt = TextTheme(bodyLarge: nts, bodyMedium: nts, bodySmall: nts, displayLarge: nts, displayMedium: nts, displaySmall: nts, titleLarge: nts, titleMedium: nts, titleSmall: nts, labelLarge: nts, labelMedium: nts, labelSmall: nts, headlineLarge: nts, headlineMedium: nts, headlineSmall: nts);
+
+ThemeData themeNAFO = ThemeData.light().copyWith(
+  primaryColor: Color.fromARGB(255, 255, 221, 0),
+  applyElevationOverlayColor: true,
+  canvasColor: Color.fromARGB(255, 0, 87, 83),
+  cardColor: Color.fromARGB(255, 255, 221, 0),
+  hoverColor: Color.fromARGB(155, 255, 221, 0),
+  disabledColor: Colors.blueGrey,
+  highlightColor: Color.fromARGB(255, 250, 255, 58),
+  scaffoldBackgroundColor: Color.fromARGB(255, 0, 87, 183),
+  dialogBackgroundColor: Color.fromARGB(255, 0, 87, 183),
+  indicatorColor: Color.fromARGB(255, 255, 221, 0),
+  textTheme: ntt,
+  primaryTextTheme: ntt,
+  inputDecorationTheme: InputDecorationTheme(hintStyle: uhs),
+  tabBarTheme: TabBarTheme(
+    indicatorColor:  Color.fromARGB(255, 0, 87, 183),
+    dividerColor: Color.fromARGB(255, 0, 87, 183), 
+    labelStyle: TextStyle(color: Color.fromARGB(255, 250, 255, 58), backgroundColor: Color.fromARGB(255, 0, 87, 183), fontSize: 18),
+    unselectedLabelStyle: TextStyle(fontStyle: FontStyle.italic, color:  Color.fromARGB(255, 250, 255, 58), )
+  )
+);
+BoxDecoration decorationNAFO = BoxDecoration(image: DecorationImage(image: AssetImage("assets/images/NAFO.png"), alignment: Alignment.bottomRight, fit: BoxFit.scaleDown, ));
+
+TextStyle uts = TextStyle(color: Color.fromARGB(255, 255, 221, 0), fontSize: 14);
+TextStyle uhs = TextStyle(color: Color.fromARGB(255, 200, 190, 0), fontSize: 12, fontStyle: FontStyle.italic);
+TextTheme utt = TextTheme(bodyLarge: uts, bodyMedium: uts, bodySmall: uts, displayLarge: uts, displayMedium: uts, displaySmall: uts, titleLarge: uts, titleMedium: uts, titleSmall: uts, labelLarge: uts, labelMedium: uts, labelSmall: uts, headlineLarge: uts, headlineMedium: uts, headlineSmall: uts);
+BoxDecoration decorationUkraine = BoxDecoration(image: DecorationImage(image: AssetImage("assets/images/UAHeart.png"), alignment: Alignment.bottomRight, fit: BoxFit.scaleDown, ));
+
+ThemeData themeUkraine = ThemeData.dark().copyWith(
+  primaryColor: Color.fromARGB(255, 0, 87, 183),
+  applyElevationOverlayColor: true,
+  canvasColor: Color.fromARGB(255, 0, 87, 83),
+  cardColor: Color.fromARGB(255, 255, 221, 0),
+  hoverColor: Color.fromARGB(155, 255, 221, 0),
+  disabledColor: Colors.blueGrey,
+  highlightColor: Color.fromARGB(155, 250, 255, 58),
+  dialogBackgroundColor: Color.fromARGB(255, 250, 255, 58),
+  scaffoldBackgroundColor: Color.fromARGB(255, 0, 87, 183),
+  indicatorColor: Color.fromARGB(255, 255, 221, 0),
+  textTheme: utt,
+  primaryTextTheme: utt,
+  inputDecorationTheme: InputDecorationTheme(hintStyle: uhs),
+  tabBarTheme: TabBarTheme(
+    indicatorColor:  Color.fromARGB(255, 0, 87, 183),
+    dividerColor: Color.fromARGB(255, 0, 87, 183), 
+    labelStyle: TextStyle(color: Color.fromARGB(255, 250, 255, 58), backgroundColor: Color.fromARGB(255, 0, 87, 183), fontSize: 18),
+    unselectedLabelStyle: TextStyle(fontStyle: FontStyle.italic, color: Color.fromARGB(255, 0, 87, 183),)
+  )
+);
+
+class BskyListManager extends StatefulWidget {
+  const BskyListManager({super.key});
+  @override
+  State<BskyListManager> createState() => _BskyListManagerState();
+}
+
+class _BskyListManagerState extends State<BskyListManager> {
+  ThemeStuff themeChanger = ThemeStuff.instance;
+  
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Bluesky App to manage lists',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 12, 41, 112)),
-        useMaterial3: true,
-      ),
-      home: const ListManagerPage(title: 'Bluesky App to manage lists'),
+    loadSavedPreferences();
+    return ValueListenableBuilder(
+      valueListenable: themeChanger.theme,
+      builder: (context, value, child) {
+        return MaterialApp(
+          title: 'Bluesky App to manage lists',
+          debugShowCheckedModeBanner: false,
+          theme: value,
+          home: const ListManagerPage(title: 'Bluesky App to manage lists'),
+        );
+      },
     );
   }
 }
+
 
 class ListManagerPage extends StatefulWidget {
   const ListManagerPage({super.key, required this.title});
@@ -57,6 +197,11 @@ class BList {
   }
 }
 
+// ***************** Settings *****************************************
+int maxListEntries = 25000;
+bool loadLastUserName = true;
+int themeIndex = 0; // 0 light, 1 dark, 2 Ukraine, 3 NAFO
+
 Bsky? bsky;
 String loginHandle = "";
 String loginAppPass = "";
@@ -84,17 +229,48 @@ String getNow() {
   return "${(now.substring(0, now.lastIndexOf('.')))}Z";
 }
 
+void loadSavedPreferences() async {
+  shared_prefs.SharedPreferences prefs = await shared_prefs.SharedPreferences.getInstance();
+  loadLastUserName = prefs.getBool("LoadLastUserName") ?? true;
+  if (loadLastUserName) {
+    loginHandle = prefs.getString("UserHandle") ?? "";
+    loginAppPass = prefs.getString("UserAppPwd") ?? "";
+  }
+  maxListEntries = prefs.getInt("MaxListEntries") ?? 25000;
+  themeIndex = prefs.getInt("ThemeIndex") ?? 0;
+  
+  ThemeStuff themeChanger = ThemeStuff.instance;
+  switch(themeIndex) {
+    case 0: themeChanger.updateValue(themeLight, decorationLight); break;
+    case 1: themeChanger.updateValue(themeDark, decorationDark); break;
+    case 2: themeChanger.updateValue(themeNAFO, decorationNAFO); break;
+    case 3: themeChanger.updateValue(themeUkraine, decorationUkraine); break;
+  }
+}
+
+void savePreferences() async {
+  shared_prefs.SharedPreferences prefs = await shared_prefs.SharedPreferences.getInstance();
+  prefs.setBool("LoadLastUserName", loadLastUserName);
+  prefs.setString("UserHandle", loginHandle);
+  prefs.setString("UserAppPwd", loginAppPass);
+  prefs.setInt("MaxListEntries", maxListEntries);
+  prefs.setInt("ThemeIndex", themeIndex);
+}
 
 class _ListManagerPageState extends State<ListManagerPage> {
   @override
   Widget build(BuildContext context) {
     int tab = 0;
-    return Scaffold(
-      body: 
-        VerticalTabs(
+    return ValueListenableBuilder(
+      valueListenable: ThemeStuff.instance.theme,
+      builder: (context, value, child) {
+        return VerticalTabs(
           tabsWidth: 120,
           indicatorWidth: 120,
-          indicatorColor: Theme.of(context).colorScheme.inversePrimary,
+          tabBackgroundColor: ThemeStuff.getBackground(.8),
+          indicatorColor:  ThemeStuff.getHighlight(true),
+          selectedTabTextStyle: TextStyle(color: ThemeStuff.getPrimary(false)),
+          unSelectedTabTextStyle: TextStyle(color: ThemeStuff.getPrimary(true)),
           initialIndex: tab,
           tabs: <String>[
             "Login", 
@@ -109,7 +285,8 @@ class _ListManagerPageState extends State<ListManagerPage> {
             ManageListsTab(),
             ManageUsersInListsTab(),
             SettingsTab(),
-          ])
+          ]);
+      },
     );
   }
 }
@@ -131,26 +308,16 @@ class _LoginTabState extends State<LoginTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (loginHandle == "" || loginAppPass == "") {
-      Future.delayed(Duration.zero, () async {
-        shared_prefs.SharedPreferences prefs = await shared_prefs.SharedPreferences.getInstance();
-        String? handle = prefs.getString("UserHandle");
-        String? apppwd = prefs.getString("UserAppPwd");
-        if (context.mounted) {
-          if (handle != null) _userHandleCtrl.text = handle;
-          if (apppwd != null) _userAppPwdCtrl.text = apppwd;
-        }
-      });
-    }
-
     return Scaffold(
-      appBar: AppBar(backgroundColor: Theme.of(context).colorScheme.inversePrimary, title: Text("Login"),
+      appBar: AppBar(backgroundColor: ThemeStuff.getBackground(.9), title: Text("Login"), foregroundColor: ThemeStuff.getForeground(),
         actions: [
           Text(exception),
           IconButton(onPressed: (){ exit(0); },
             tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
         ]),
-      body: Center(child: Column(children: [
+      body: Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(
+        child: Column(children: [
         Text("          Please identify yourself", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30)),
         Table(
           border: TableBorder.symmetric(),
@@ -166,7 +333,7 @@ class _LoginTabState extends State<LoginTab> {
               SizedBox(width: 400, height: 48, child: TextField(
                 keyboardType: TextInputType.text,
                 autocorrect: false,
-                decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User Handle", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.account_circle)),
+                decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User Handle", prefixIcon: Icon(Icons.account_circle)),
                 controller: _userHandleCtrl,
               )),
             ]),
@@ -179,7 +346,7 @@ class _LoginTabState extends State<LoginTab> {
                 keyboardType: TextInputType.visiblePassword,
                 obscureText: passwordNotVisible,
                 autocorrect: false,
-                decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "App Password", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.question_mark)),
+                decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "App Password", prefixIcon: Icon(Icons.question_mark)),
                 controller: _userAppPwdCtrl,
               )),
               IconButton(onPressed: () {
@@ -205,7 +372,7 @@ class _LoginTabState extends State<LoginTab> {
             
             ]),
           ])
-    ])));
+    ]))));
   }
 
   void getBluesky(BuildContext context, bool refresh) async {
@@ -278,11 +445,11 @@ class _GetInfoTabState extends State<GetInfoTab> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeStuff.instance.theme.value,
       home: DefaultTabController(
         length: 4,
         child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.inversePrimary, 
+          appBar: AppBar(backgroundColor: ThemeStuff.getBackground(.9), foregroundColor: ThemeStuff.getForeground(),
             actions: [
               IconButton(onPressed: (){ exit(0); },
                 tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
@@ -325,15 +492,16 @@ class _GetUserListsTabState extends State<GetUserListsTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(child: Column(children: [
+    return Scaffold(backgroundColor: ThemeStuff.getScaffold(1),
+      body: Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
             SizedBox(height: 20,),
             Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:plc:4xxvirkcait46ycqabcdefgh>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
             SizedBox(width: 600, height: 48, child: TextField(
               controller: _userInfoHandleCtrl,
               keyboardType: TextInputType.text,
               autocorrect: false,
-              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", prefixIcon: Icon(Icons.person)),
             ))),
             SizedBox(height: 20,),
             Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -349,7 +517,7 @@ class _GetUserListsTabState extends State<GetUserListsTab> {
             SizedBox(height: 20,),
             _listsTableUserList,
           ])),
-    );
+    ));
   }
 
 
@@ -374,7 +542,7 @@ class _GetUserListsTabState extends State<GetUserListsTab> {
           SizedBox(width: 800, height: 48, child: TextField(
             keyboardType: TextInputType.text,
             autocorrect: false,
-            decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "AtUri of list", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.list)),
+            decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "AtUri of list", prefixIcon: Icon(Icons.list)),
             controller: TextEditingController(text: uri),
           )),
         ]);
@@ -419,14 +587,15 @@ class _GetUserStarterPacksState extends State<GetUserStarterPacksTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Column(children: [
+      body: Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
             SizedBox(height: 20,),
             Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:plc:4xxvirkcait46ycqabcdefgh>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
             SizedBox(width: 600, height: 48, child: TextField(
               controller: _userInfoHandleCtrl,
               keyboardType: TextInputType.text,
               autocorrect: false,
-              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", prefixIcon: Icon(Icons.person)),
             ))),
             SizedBox(height: 20,),
             Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -442,7 +611,7 @@ class _GetUserStarterPacksState extends State<GetUserStarterPacksTab> {
             SizedBox(height: 20,),
             _listsTableStarterPacks,
           ])),
-    );
+    ));
   }
 
   void getBlueskyStarterPacksListsForUser() async {
@@ -466,7 +635,7 @@ class _GetUserStarterPacksState extends State<GetUserStarterPacksTab> {
           SizedBox(width: 800, height: 48, child: TextField(
             keyboardType: TextInputType.text,
             autocorrect: false,
-            decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "AtUri of starter pack", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.list)),
+            decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "AtUri of starter pack", prefixIcon: Icon(Icons.list)),
             controller: TextEditingController(text: uri),
           )),
         ]);
@@ -511,14 +680,15 @@ class _GetUserInfoState extends State<GetUserInfoTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Column(children: [
+      body: Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
             SizedBox(height: 20,),
             Tooltip(message: "User handle can be entered in multiple ways:\n- username.bsky.social\n- @username.bsky.social\n- or just the first part <username> in case it ends with <.bsky.social>\n- DID are also valid <did:plc:4xxvirkcait46ycqabcdefgh>\n- and you can even past the HTTPS link to the profile: https://bsky.app/profile/username.bsky.social", child: 
             SizedBox(width: 600, height: 48, child: TextField(
               controller: _userInfoHandleCtrl,
               keyboardType: TextInputType.text,
               autocorrect: false,
-              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", prefixIcon: Icon(Icons.person)),
             ))),
             SizedBox(height: 20,),
             Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -534,7 +704,7 @@ class _GetUserInfoState extends State<GetUserInfoTab> {
             SizedBox(height: 20,),
             _listsTableUserInfo,
           ])),
-    );
+    ));
   }
 
   void getBlueskyInfoForUser() async {
@@ -600,7 +770,8 @@ class _GetMyListsState extends State<GetMyListsTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Column(children: [
+      body: Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
             SizedBox(height: 20,),
             Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -615,7 +786,7 @@ class _GetMyListsState extends State<GetMyListsTab> {
             SizedBox(height: 20,),
             _listsTableMyLists,
           ])),
-    );
+    ));
   }
 
   void getMyLists() async {
@@ -636,7 +807,7 @@ class _GetMyListsState extends State<GetMyListsTab> {
           SizedBox(width: 800, height: 48, child: TextField(
             keyboardType: TextInputType.text,
             autocorrect: false,
-            decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "AtUri of list", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.list)),
+            decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "AtUri of list", prefixIcon: Icon(Icons.list)),
             controller: TextEditingController(text: uri),
           )),
         ]);
@@ -680,11 +851,11 @@ class _ManageListsTabState extends State<ManageListsTab> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeStuff.instance.theme.value,
       home: DefaultTabController(
         length: 4,
         child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.inversePrimary, 
+          appBar: AppBar(backgroundColor: ThemeStuff.getBackground(.9), foregroundColor: ThemeStuff.getForeground(),
             actions: [
               IconButton(onPressed: (){ exit(0); },
                 tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
@@ -728,7 +899,8 @@ class _CountUserInListsTabState extends State<CountUserInListsTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Column(children: [
+      body: Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
         Table(
           columnWidths: const <int, TableColumnWidth>{
             0: IntrinsicColumnWidth(),
@@ -769,7 +941,7 @@ class _CountUserInListsTabState extends State<CountUserInListsTab> {
         Text(progress),
         Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
       ])),
-    );
+    ));
   }
 
   void countNumberOfEntries() async {
@@ -834,7 +1006,8 @@ class _CopyOneListIntoAnotherTabState extends State<CopyOneListIntoAnotherTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Column(children: [
+      body: Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
         Table(
           columnWidths: const <int, TableColumnWidth>{
             0: IntrinsicColumnWidth(),
@@ -898,7 +1071,7 @@ class _CopyOneListIntoAnotherTabState extends State<CopyOneListIntoAnotherTab> {
         SizedBox(height: 20,),
         Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
       ])),
-    );
+    ));
   }
 
   void copyListIntoDestination() async {
@@ -996,7 +1169,8 @@ class _CleanListTabState extends State<CleanListTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Column(children: [
+      body: Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
         Table(
           columnWidths: const <int, TableColumnWidth>{
             0: IntrinsicColumnWidth(),
@@ -1053,7 +1227,7 @@ class _CleanListTabState extends State<CleanListTab> {
         SizedBox(height: 20,),
         Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
       ])),
-    );
+    ));
   }
 
   void clearList() async {
@@ -1122,7 +1296,8 @@ class _CopyStarterPackIntoListTabState extends State<CopyStarterPackIntoListTab>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Column(children: [
+      body: Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
         Table(
           columnWidths: const <int, TableColumnWidth>{
             0: IntrinsicColumnWidth(),
@@ -1186,7 +1361,7 @@ class _CopyStarterPackIntoListTabState extends State<CopyStarterPackIntoListTab>
         SizedBox(height: 20,),
         Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
       ])),
-    );
+    ));
   }
 
 
@@ -1289,11 +1464,11 @@ class _ManageUsersInListsTabState extends State<ManageUsersInListsTab> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeStuff.instance.theme.value,
       home: DefaultTabController(
         length: 5,
         child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.inversePrimary, 
+          appBar: AppBar(backgroundColor: ThemeStuff.getBackground(.9), foregroundColor: ThemeStuff.getForeground(),
             actions: [
               IconButton(onPressed: (){ exit(0); },
                 tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
@@ -1357,7 +1532,7 @@ class _AddUserToListTabState extends State<AddUserToListTab> {
               maxLines: 32,
               keyboardType: TextInputType.multiline,
               autocorrect: false,
-              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle or DID. You can add multiple ones, one per line", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle or DID. You can add multiple ones, one per line", prefixIcon: Icon(Icons.person)),
             ))),
           ]),
 
@@ -1517,7 +1692,7 @@ class _RemoveUserFromListTabState extends State<RemoveUserFromListTab> {
               maxLines: 32,
               keyboardType: TextInputType.multiline,
               autocorrect: false,
-              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle or DID. You can add multiple ones, one per line", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle or DID. You can add multiple ones, one per line", prefixIcon: Icon(Icons.person)),
             ))),
           ]),
 
@@ -1716,7 +1891,7 @@ class _CheckIfUserIsInListTabState extends State<CheckIfUserIsInListTab> {
               controller: _userForListHandleCtrl,
               keyboardType: TextInputType.text,
               autocorrect: false,
-              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.person)),
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "User handle", prefixIcon: Icon(Icons.person)),
             ))),
           ]),
 
@@ -2083,7 +2258,7 @@ class _UnblockAllUsersInListTabState extends State<UnblockAllUsersInListTab> {
 
 // ************** Settings ***************************************************
 
-int maxListEntries = 25000;
+
 
 class SettingsTab extends StatefulWidget  {
   const SettingsTab({super.key});
@@ -2099,13 +2274,14 @@ class _SettingsTabState extends State<SettingsTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Theme.of(context).colorScheme.inversePrimary, title: Text("Settings"),
+      appBar: AppBar(backgroundColor: ThemeStuff.getBackground(.9), title: Text("Settings"), foregroundColor: ThemeStuff.getForeground(),
         actions: [
           Text(exception),
           IconButton(onPressed: (){ exit(0); },
             tooltip: "Shut down", icon: Icon(Icons.power_settings_new))
         ]),
-      body: Center(child: Column(children: [
+      body: Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
         Table(
           border: TableBorder.symmetric(),
           columnWidths: const <int, TableColumnWidth> {
@@ -2115,33 +2291,81 @@ class _SettingsTabState extends State<SettingsTab> {
           },
           defaultVerticalAlignment: TableCellVerticalAlignment.middle,
           children: <TableRow>[
+            TableRow(children: [Text(""), SizedBox(width: 20,), SizedBox(height: 40,)]),
+
             TableRow(children: [
               Text("Max items from a list:"),SizedBox(width: 20,),
               Row(children: [
+              Tooltip(message: "Lists will be managed up to the defined number.\nIf you set it to 1234 then only the first 1234 items in the list will be managed for all actions on lists.", child: 
               SizedBox(width: 400, height: 48, child: TextField(
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "Max list entries", hintStyle: TextStyle(fontSize: 14), prefixIcon: Icon(Icons.account_circle)),
+                decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "Max list entries", prefixIcon: Icon(Icons.account_circle)),
                 controller: _maxListEntries,
                 inputFormatters: [ FilteringTextInputFormatter.digitsOnly],
                 onChanged: (value) {
                   maxListEntries = int.tryParse(value) ?? 25000;
                 },
-              )),
+              ))),
+              Tooltip(message: "Increases the value of 1000 units", child: 
               IconButton( icon: Icon(Icons.arrow_upward), onPressed: () {
                 maxListEntries += 1000;
                 setState(() { _maxListEntries.text = "$maxListEntries"; });
-              }),
+              })),
+              Tooltip(message: "Decreases the value of 1000 units", child: 
               IconButton( icon: Icon(Icons.arrow_downward), onPressed: () {
                 maxListEntries -= 1000;
                 if (maxListEntries < 150) maxListEntries = 150;
                 setState(() { _maxListEntries.text = "$maxListEntries"; });
-              }),
+              })),
               ])
             ]),
 
             TableRow(children: [Text(""), SizedBox(width: 20,), SizedBox(height: 40,)]),
+
+            TableRow(children: [
+              Text("Remember last user and password:"),SizedBox(width: 20,),
+              Tooltip(message: "If checked, the user and password will be saved locally,\nand then will be pre-filled in the login page.\n\n‼ ↦ Do not use it if this is not your computer ↤ ‼❗❗❗", child: 
+              Align(alignment: Alignment.centerLeft, child: Checkbox(value: loadLastUserName,
+                onChanged: (value) { setState(() { loadLastUserName = value ?? false; }); },
+              ))),
+            ]),
+
+            TableRow(children: [
+              Text("Color mode:"),SizedBox(width: 20,),
+              Tooltip(message: "Change the color mode to fit your preferences", child: 
+              SizedBox(height: 50, child: 
+              Align(alignment: Alignment.centerLeft, child: 
+                DropdownButton(items: [
+                  DropdownMenuItem(value: 0, child: Text("Light")),
+                  DropdownMenuItem(value: 1, child: Text("Dark")),
+                  DropdownMenuItem(value: 2, child: Text("NAFO")),
+                  DropdownMenuItem(value: 3, child: Text("Ukraine")),
+                ], value: themeIndex, onChanged: (value) {
+                  setState(() { 
+                    themeIndex = value ?? 0;
+                    ThemeStuff themeChanger = ThemeStuff.instance;
+
+                    switch(themeIndex) {
+                      case 0: themeChanger.updateValue(themeLight, decorationLight); break;
+                      case 1: themeChanger.updateValue(themeDark, decorationDark); break;
+                      case 2: themeChanger.updateValue(themeNAFO, decorationNAFO); break;
+                      case 3: themeChanger.updateValue(themeUkraine, decorationUkraine); break;
+                    }
+                  });
+                })))
+              ),
+            ]),
+
+            TableRow(children: [Text(""), SizedBox(width: 20,), SizedBox(height: 40,)]),
+
+            TableRow(children: [
+              Text(""),SizedBox(width: 20,),
+              ElevatedButton(onPressed: savePreferences, child: Text("Save"))
+            ]),
+          
+            TableRow(children: [Text(""), SizedBox(width: 20,), SizedBox(height: 40,)]),
           ])
-    ])));
+    ]))));
   }
 
 }
