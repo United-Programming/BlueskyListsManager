@@ -1571,7 +1571,8 @@ class _AddUserToListTabState extends State<AddUserToListTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(child: Column(children: [
+    return Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
       SizedBox(height: 20,),
         Table(
           columnWidths: const <int, TableColumnWidth>{
@@ -1632,7 +1633,7 @@ class _AddUserToListTabState extends State<AddUserToListTab> {
         ],),
         SizedBox(height: 20,),
         Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
-      ]));
+      ])));
   }
 
   void addUserToList() async {
@@ -1731,7 +1732,8 @@ class _RemoveUserFromListTabState extends State<RemoveUserFromListTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(child: Column(children: [
+    return Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
       SizedBox(height: 20,),
         Table(
           columnWidths: const <int, TableColumnWidth>{
@@ -1792,7 +1794,7 @@ class _RemoveUserFromListTabState extends State<RemoveUserFromListTab> {
         ],),
         SizedBox(height: 20,),
         Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
-      ]));
+      ])));
   }
 
   void removeUserFromList() async {
@@ -1931,7 +1933,8 @@ class _CheckIfUserIsInListTabState extends State<CheckIfUserIsInListTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(child: Column(children: [
+    return Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
       SizedBox(height: 20,),
         Table(
           columnWidths: const <int, TableColumnWidth>{
@@ -1979,7 +1982,7 @@ class _CheckIfUserIsInListTabState extends State<CheckIfUserIsInListTab> {
         ],),
         SizedBox(height: 20,),
         Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
-      ]));
+      ])));
   }
 
   void checkIfUserIsInList() async {
@@ -2064,7 +2067,8 @@ class _BlockAllUsersInListTabState extends State<BlockAllUsersInListTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(child: Column(children: [
+    return Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
       SizedBox(height: 20,),
         Table(
           columnWidths: const <int, TableColumnWidth>{
@@ -2102,7 +2106,7 @@ class _BlockAllUsersInListTabState extends State<BlockAllUsersInListTab> {
         ],),
         SizedBox(height: 20,),
         Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
-      ]));
+      ])));
   }
 
   void blockAllUsersFromTheList() async {
@@ -2177,7 +2181,8 @@ class _UnblockAllUsersInListTabState extends State<UnblockAllUsersInListTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(child: Column(children: [
+    return Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
       SizedBox(height: 20,),
         Table(
           columnWidths: const <int, TableColumnWidth>{
@@ -2215,7 +2220,7 @@ class _UnblockAllUsersInListTabState extends State<UnblockAllUsersInListTab> {
         ],),
         SizedBox(height: 20,),
         Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
-      ]));
+      ])));
   }
 
   void unblockAllUsersFromTheList() async {
