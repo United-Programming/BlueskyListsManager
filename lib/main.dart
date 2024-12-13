@@ -262,6 +262,12 @@ void savePreferences() async {
   prefs.setInt("ThemeIndex", themeIndex);
 }
 
+void deleteSavedCredentials() async {
+  shared_prefs.SharedPreferences prefs = await shared_prefs.SharedPreferences.getInstance();
+  prefs.setString("UserHandle", "");
+  prefs.setString("UserAppPwd", "");
+}
+
 class _ListManagerPageState extends State<ListManagerPage> {
   @override
   Widget build(BuildContext context) {
@@ -389,13 +395,6 @@ class _LoginTabState extends State<LoginTab> {
   }
 
   void getBluesky(BuildContext context, bool refresh) async {
-    Widget okButton = ElevatedButton(
-      child: const Text("OK"),
-      onPressed:  () {
-        Navigator.of(context).pop(); // dismiss dialog
-      },
-    );
-
     try {
         final session = await atp.createSession(
           service: 'bsky.social', //! The default is `bsky.social`
@@ -2327,6 +2326,7 @@ class _SettingsTabState extends State<SettingsTab> {
   final TextEditingController _maxListEntries = TextEditingController(text: "$maxListEntries");
   String exception = "";
   bool passwordNotVisible = true;
+  bool toBeConfirmed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -2430,6 +2430,34 @@ class _SettingsTabState extends State<SettingsTab> {
               ElevatedButton(onPressed: savePreferences, child: Text("Save"))
             ]),
           
+            TableRow(children: [Text(""), SizedBox(width: 20,), SizedBox(height: 40,)]),
+
+            TableRow(children: [
+              Text(""),SizedBox(width: 20,),
+              ElevatedButton(onPressed: () {
+                setState(() { toBeConfirmed = true; });
+              }, style: const ButtonStyle(backgroundColor: WidgetStatePropertyAll<Color>(Colors.red)),
+              child: Text("Delete my credentials"))
+            ]),
+          
+            TableRow(children: [Text(""), SizedBox(width: 20,), SizedBox(height: 40,)]),
+
+            TableRow(children: [
+              Visibility(visible: toBeConfirmed, child: Text("Do you confirm you wish to delete\nthe saved credentials?"),),
+              SizedBox(width: 20,),
+              Visibility(visible: toBeConfirmed, child: Row(children: [
+                ElevatedButton(
+                  style: const ButtonStyle(backgroundColor: WidgetStatePropertyAll<Color>(Colors.red)),
+                  onPressed: () { deleteSavedCredentials(); }, 
+                  child: const Text("Yes, clean it up!"),
+                ),
+                ElevatedButton(
+                  onPressed: () { setState(() { toBeConfirmed = false;}); }, 
+                  child: const Text("Better not..."),
+                ),
+              ],))
+            ]),
+
             TableRow(children: [Text(""), SizedBox(width: 20,), SizedBox(height: 40,)]),
           ])
     ]))));
