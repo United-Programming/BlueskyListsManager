@@ -87,7 +87,7 @@ ThemeData themeDark = ThemeData.dark().copyWith(
 );
 BoxDecoration decorationDark = BoxDecoration(image: DecorationImage(image: AssetImage("assets/images/Dark.png"), alignment: Alignment.bottomRight, fit: BoxFit.scaleDown, ));
 
-TextStyle nts = TextStyle(color: Color.fromARGB(255, 255, 221, 0), fontSize: 14);
+TextStyle nts = TextStyle(color: Color.fromARGB(255, 255, 221, 0), fontSize: 14, );
 TextStyle nhs = TextStyle(color: Color.fromARGB(255, 200, 190, 0), fontSize: 12, fontStyle: FontStyle.italic);
 TextTheme ntt = TextTheme(bodyLarge: nts, bodyMedium: nts, bodySmall: nts, displayLarge: nts, displayMedium: nts, displaySmall: nts, titleLarge: nts, titleMedium: nts, titleSmall: nts, labelLarge: nts, labelMedium: nts, labelSmall: nts, headlineLarge: nts, headlineMedium: nts, headlineSmall: nts);
 
@@ -103,13 +103,14 @@ ThemeData themeNAFO = ThemeData.light().copyWith(
   dialogBackgroundColor: Color.fromARGB(255, 0, 87, 183),
   indicatorColor: Color.fromARGB(255, 255, 221, 0),
   textTheme: ntt,
+  iconTheme: IconThemeData(color: Color.fromARGB(255, 255, 221, 0),),
   primaryTextTheme: ntt,
-  inputDecorationTheme: InputDecorationTheme(hintStyle: uhs),
+  inputDecorationTheme: InputDecorationTheme(hintStyle: nhs, prefixIconColor: Color.fromARGB(255, 250, 255, 58),),
   tabBarTheme: TabBarTheme(
     indicatorColor:  Color.fromARGB(255, 0, 87, 183),
     dividerColor: Color.fromARGB(255, 0, 87, 183), 
     labelStyle: TextStyle(color: Color.fromARGB(255, 250, 255, 58), backgroundColor: Color.fromARGB(255, 0, 87, 183), fontSize: 18),
-    unselectedLabelStyle: TextStyle(fontStyle: FontStyle.italic, color:  Color.fromARGB(255, 250, 255, 58), )
+    unselectedLabelStyle: TextStyle(fontStyle: FontStyle.italic, color: Color.fromARGB(255, 250, 255, 58), )
   )
 );
 BoxDecoration decorationNAFO = BoxDecoration(image: DecorationImage(image: AssetImage("assets/images/NAFO.png"), alignment: Alignment.bottomRight, fit: BoxFit.scaleDown, ));
@@ -131,8 +132,9 @@ ThemeData themeUkraine = ThemeData.dark().copyWith(
   scaffoldBackgroundColor: Color.fromARGB(255, 0, 87, 183),
   indicatorColor: Color.fromARGB(255, 255, 221, 0),
   textTheme: utt,
+  iconTheme: IconThemeData(color: Color.fromARGB(255, 255, 221, 0),),
   primaryTextTheme: utt,
-  inputDecorationTheme: InputDecorationTheme(hintStyle: uhs),
+  inputDecorationTheme: InputDecorationTheme(hintStyle: uhs, prefixIconColor:  Color.fromARGB(255, 200, 181, 0),),
   tabBarTheme: TabBarTheme(
     indicatorColor:  Color.fromARGB(255, 0, 87, 183),
     dividerColor: Color.fromARGB(255, 0, 87, 183), 
@@ -200,6 +202,7 @@ class BList {
 // ***************** Settings *****************************************
 int maxListEntries = 25000;
 bool loadLastUserName = true;
+bool preloadOwnLists = true;
 int themeIndex = 0; // 0 light, 1 dark, 2 Ukraine, 3 NAFO
 
 Bsky? bsky;
@@ -232,6 +235,7 @@ String getNow() {
 void loadSavedPreferences() async {
   shared_prefs.SharedPreferences prefs = await shared_prefs.SharedPreferences.getInstance();
   loadLastUserName = prefs.getBool("LoadLastUserName") ?? true;
+  preloadOwnLists = prefs.getBool("PreloadOwnLists") ?? false;
   if (loadLastUserName) {
     loginHandle = prefs.getString("UserHandle") ?? "";
     loginAppPass = prefs.getString("UserAppPwd") ?? "";
@@ -251,6 +255,7 @@ void loadSavedPreferences() async {
 void savePreferences() async {
   shared_prefs.SharedPreferences prefs = await shared_prefs.SharedPreferences.getInstance();
   prefs.setBool("LoadLastUserName", loadLastUserName);
+  prefs.setBool("PreloadOwnLists", preloadOwnLists);
   prefs.setString("UserHandle", loginHandle);
   prefs.setString("UserAppPwd", loginAppPass);
   prefs.setInt("MaxListEntries", maxListEntries);
@@ -304,10 +309,16 @@ class _LoginTabState extends State<LoginTab> {
   final TextEditingController _userHandleCtrl = TextEditingController();
   final TextEditingController _userAppPwdCtrl = TextEditingController();
   String exception = "";
+  String result = "";
   bool passwordNotVisible = true;
 
   @override
   Widget build(BuildContext context) {
+    if (loadLastUserName) {
+      _userHandleCtrl.text = loginHandle;
+      _userAppPwdCtrl.text = loginAppPass;
+    }
+
     return Scaffold(
       appBar: AppBar(backgroundColor: ThemeStuff.getBackground(.9), title: Text("Login"), foregroundColor: ThemeStuff.getForeground(),
         actions: [
@@ -369,8 +380,10 @@ class _LoginTabState extends State<LoginTab> {
                   getBluesky(context, true);
                 },
               ),
-            
             ]),
+
+            TableRow(children: [Text(result), SizedBox(width: 20,), SizedBox(height: 40,)]),
+
           ])
     ]))));
   }
@@ -401,34 +414,78 @@ class _LoginTabState extends State<LoginTab> {
         if (context.mounted && refresh) {
           if (context.mounted) {
             exception = "";
-            showDialog(context: context, barrierDismissible: false, builder: (BuildContext context) {
-              return AlertDialog(content: Text("Connected!"), actions: [ okButton ],);
-            });
+            if (preloadOwnLists) {
+              await getMyLists();
+            }
+            setState(() { result = "Connected!"; });
           }
         }
         else {
           if (context.mounted) {
-            setState(() { exception = "Reconnected!"; });
-            showDialog(context: context, barrierDismissible: false, builder: (BuildContext context) {
-              return AlertDialog(content: Text(exception), actions: [ okButton ],);
-            });
+            setState(() { exception = ""; result = "Reconnected!"; });
+            if (preloadOwnLists) {
+              await getMyLists();
+            }
           }
         }
     } on core.UnauthorizedException {
       if (context.mounted) {
         setState(() { exception = "Invalid handle or password!"; });
-        showDialog(context: context, barrierDismissible: false, builder: (BuildContext context) {
-          return AlertDialog(content: Text(exception), actions: [ okButton ],);
-        });
       }
     }
     catch (ex) {
       if (context.mounted) {
         setState(() { exception = "EXCEPTION!: $ex"; });
-        showDialog(context: context, barrierDismissible: false, builder: (BuildContext context) {
-          return AlertDialog(content: Text(exception), actions: [ okButton ],);
-        });
       }
+    }
+  }
+
+  Future getMyLists() async {
+    if (bsky == null) {
+      setState(() { exception = "Please login!"; });
+      return;
+    }
+    String handle = bsky!.bsky.session!.did;
+    String user = bsky!.bsky.session!.handle;
+    setState(() { exception = ""; result = "Collecting lists..."; });
+    try {
+      final lists = await bsky!.graph.getLists(actor: handle);
+      List<TableRow> rows = [];
+      for (var l in lists.data.lists) {
+        var uri = l.uri.toString();
+        TableRow row = TableRow(children: [
+          TableCell(verticalAlignment: TableCellVerticalAlignment.middle, child: Text(l.name, textAlign: TextAlign.right,style:boldStyle)), 
+          SizedBox(width: 800, height: 48, child: TextField(
+            keyboardType: TextInputType.text,
+            autocorrect: false,
+            decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "AtUri of list", prefixIcon: Icon(Icons.list)),
+            controller: TextEditingController(text: uri),
+          )),
+        ]);
+        rows.add(row);
+        bool missing = true;
+        for (var l in allLists) {
+          if (l.at == uri) {
+            missing = false;
+            break;
+          }
+        }
+        if (missing) allLists.add(BList("${l.name} ($user)", uri));
+      }
+      _listsTableMyLists = Table(children: rows, columnWidths: const <int, TableColumnWidth>{
+        0: IntrinsicColumnWidth(),
+        1: IntrinsicColumnWidth(),
+      },);
+      setState(() { exception = ""; result = ""; });
+    } on core.InvalidRequestException catch(ex) {
+      var msg = ex.toString();
+      int pos = msg.lastIndexOf('4');
+      if (pos!=-1) {
+        msg = "User not found: ${msg.substring(pos+3)}";
+      }
+      setState(() { exception = msg; });
+    } catch(ex) {
+      setState(() { exception = "EXCEPTION!: $ex"; });
     }
   }
 }
@@ -2299,7 +2356,7 @@ class _SettingsTabState extends State<SettingsTab> {
               Tooltip(message: "Lists will be managed up to the defined number.\nIf you set it to 1234 then only the first 1234 items in the list will be managed for all actions on lists.", child: 
               SizedBox(width: 400, height: 48, child: TextField(
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "Max list entries", prefixIcon: Icon(Icons.account_circle)),
+                decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "Max list entries", prefixIcon: Icon(Icons.numbers)),
                 controller: _maxListEntries,
                 inputFormatters: [ FilteringTextInputFormatter.digitsOnly],
                 onChanged: (value) {
@@ -2320,13 +2377,23 @@ class _SettingsTabState extends State<SettingsTab> {
               ])
             ]),
 
-            TableRow(children: [Text(""), SizedBox(width: 20,), SizedBox(height: 40,)]),
+            TableRow(children: [Text(""), SizedBox(width: 20,), SizedBox(height: 20,)]),
 
             TableRow(children: [
               Text("Remember last user and password:"),SizedBox(width: 20,),
               Tooltip(message: "If checked, the user and password will be saved locally,\nand then will be pre-filled in the login page.\n\n‼ ↦ Do not use it if this is not your computer ↤ ‼❗❗❗", child: 
               Align(alignment: Alignment.centerLeft, child: Checkbox(value: loadLastUserName,
                 onChanged: (value) { setState(() { loadLastUserName = value ?? false; }); },
+              ))),
+            ]),
+
+            TableRow(children: [Text(""), SizedBox(width: 20,), SizedBox(height: 20,)]),
+
+            TableRow(children: [
+              Text("Preload your own lists at login:"),SizedBox(width: 20,),
+              Tooltip(message: "If checked, when you log in, your lists will be automatically loaded.", child: 
+              Align(alignment: Alignment.centerLeft, child: Checkbox(value: preloadOwnLists,
+                onChanged: (value) { setState(() { preloadOwnLists = value ?? false; }); },
               ))),
             ]),
 
