@@ -22,7 +22,7 @@ You can also block and unblock people in a list (this is useful in case you main
 
 The application is released with 4 skins (Light, Dark, NAFO, and Ukraine.)
 
-![Screenshot of the application](https://github.com/United-Programming/BlueskyListsManager/blob/main/assets/images/Screenshot.png)
+![Screenshot of the application](https://github.com/United-Programming/BlueskyListsManager/blob/main/assets/Screenshot.png)
 
 ## License
 This project is completely free and it is distributes under Creative Commons license.
@@ -35,7 +35,7 @@ There are no releases added here, you can compile on your own.If you want, I can
 The whole app was developed and build by myself.
 You can find me on Bluesky as [@nafoeverywhere.org](https://bsky.app/profile/nafoeverywhere.org)
 
-![CPU profile picture](https://github.com/United-Programming/BlueskyListsManager/blob/main/assets/images/CPU@nafoeverywhere.org.png)
+![CPU profile picture](https://github.com/United-Programming/BlueskyListsManager/blob/main/assets/CPU@nafoeverywhere.org.png)
 
 ## Help?
 
