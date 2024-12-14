@@ -29,7 +29,9 @@ This project is completely free and it is distributes under Creative Commons lic
 - It can compile for Windows, Linux, and MacOS.
 - It may work also on Android but I did not try it.
 
-There are no releases added here, you can compile on your own.If you want, I can build for Linux for you as long you show me a receipt of a donation helping Ukraine (any amount.)
+There are no releases added here, you can compile on your own.
+
+If you want, I can build for Windows for you as long you show me a receipt of a donation helping Ukraine (any amount.)
 
 ## Credits
 The whole app was developed and build by myself.
