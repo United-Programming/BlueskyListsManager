@@ -390,7 +390,9 @@ class _LoginTabState extends State<LoginTab> {
 
             TableRow(children: [Text(result), SizedBox(width: 20,), SizedBox(height: 40,)]),
 
-          ])
+          ]),
+          Spacer(flex: 2),
+          Row(children: [Text('Version 1.0 - 2024/12/14 - CPU@nafoeverywhere.org'), Spacer(flex: 5)])
     ]))));
   }
 
