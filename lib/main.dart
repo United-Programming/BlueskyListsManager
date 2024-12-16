@@ -392,7 +392,7 @@ class _LoginTabState extends State<LoginTab> {
 
           ]),
           Spacer(flex: 2),
-          Row(children: [Text('Version 1.0 - 2024/12/14 - CPU@nafoeverywhere.org'), Spacer(flex: 5)])
+          Row(children: [Text('Version 1.0.1 - 2024/12/16 - cpu@nafoeverywhere.org'), Spacer(flex: 5)])
     ]))));
   }
 
@@ -423,10 +423,10 @@ class _LoginTabState extends State<LoginTab> {
         }
         else {
           if (context.mounted) {
-            setState(() { exception = ""; result = "Reconnected!"; });
             if (preloadOwnLists) {
               await getMyLists();
             }
+            setState(() { exception = ""; result = "Reconnected!"; });
           }
         }
     } on core.UnauthorizedException {
@@ -505,7 +505,7 @@ class _GetInfoTabState extends State<GetInfoTab> {
     return MaterialApp(
       theme: ThemeStuff.instance.theme.value,
       home: DefaultTabController(
-        length: 4,
+        length: 5,
         child: Scaffold(
           appBar: AppBar(backgroundColor: ThemeStuff.getBackground(.9), foregroundColor: ThemeStuff.getForeground(),
             actions: [
@@ -518,6 +518,7 @@ class _GetInfoTabState extends State<GetInfoTab> {
                 Text("Get user's starter packs"),
                 Text("Get user's info"),
                 Text("Get my lists"),
+                Text("Clean lists"),
               ],
             ),
             title: const Text('Get Lists'),
@@ -528,6 +529,7 @@ class _GetInfoTabState extends State<GetInfoTab> {
               GetUserStarterPacksTab(),
               GetUserInfoTab(),
               GetMyListsTab(),
+              CleanListsTab(),
             ],
           ),
         ),
@@ -897,6 +899,46 @@ class _GetMyListsState extends State<GetMyListsTab> {
   }
 }
 
+class CleanListsTab extends StatefulWidget  {
+  const CleanListsTab({super.key});
+
+  @override
+  State<CleanListsTab> createState() => _CleanListsTabState();
+}
+class _CleanListsTabState extends State<CleanListsTab> {
+  String progress = "";
+  String exception = "";
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: ThemeStuff.getDecoration(), child: Center(child: Column(children: [
+            SizedBox(height: 20,),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+              ElevatedButton(
+                onPressed: () { cleanLists(); }, 
+                child: const Text("Clean lists"),
+              ),
+            ],),
+            SizedBox(height: 20,),
+            Text(progress),
+            Text(exception, style: TextStyle(color: Color(Colors.red.value), backgroundColor: Color(Colors.yellow.value)),),
+            SizedBox(height: 20,),
+          ])),
+    ));
+  }
+
+  void cleanLists() async {
+    _listsTableMyLists = Table();
+    allLists = [];
+    setState(() { exception = ""; progress = "All lists are now removed."; });
+  }
+}
+
+
+
 // ************** Manage Lists ***************************************************
 
 class ManageListsTab extends StatefulWidget {
@@ -1048,6 +1090,8 @@ class _CountUserInListsTabState extends State<CountUserInListsTab> {
   }
 }
 
+final TextEditingController _cursorForListsCtrl = TextEditingController();
+
 
 class CopyOneListIntoAnotherTab extends StatefulWidget  {
   const CopyOneListIntoAnotherTab({super.key});
@@ -1112,6 +1156,19 @@ class _CopyOneListIntoAnotherTabState extends State<CopyOneListIntoAnotherTab> {
             }, tristate: false,)))),
           ]),
 
+
+          TableRow(children: [
+            Text("Cursor: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Tooltip(message: "Keep it empty to start from teh first entry,\nor use the values that will be placed here to continue a merge\nthat was blocked because the list had more than 430 entries (Bluesky hard limit.)", child: 
+            SizedBox(width: 600, child: TextField(
+              controller: _cursorForListsCtrl,
+              keyboardType: TextInputType.multiline,
+              autocorrect: false,
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "Cursor to continue a previous merge, keep it empty if you want to start from zero.", prefixIcon: Icon(Icons.person)),
+            ))),
+          ]),
+
+
           TableRow(children: [
             SizedBox(height: 50, child: Align(alignment: Alignment.centerRight, child: Text("Progress: ", textAlign: TextAlign.right,style:boldStyle))), SizedBox(width: 10),
             Text(progress)
@@ -1170,6 +1227,9 @@ class _CopyOneListIntoAnotherTabState extends State<CopyOneListIntoAnotherTab> {
     setState(() { progress = "Copying members from source list to destination list..."; exception = ""; });
     try {
       String? cursor;
+      if (_cursorForListsCtrl.text.isNotEmpty) {
+        cursor = _cursorForListsCtrl.text;
+      }
       var count = 0;
       core.NSID collId = core.NSID.parse("app.bsky.graph.listitem");
       core.AtUri uri = core.AtUri(atUriSrc);
@@ -1195,6 +1255,7 @@ class _CopyOneListIntoAnotherTabState extends State<CopyOneListIntoAnotherTab> {
         count += src.data.items.length;
         setState(() { progress = "Merged $count..."; });
         cursor = src.data.cursor;
+        setState(() { _cursorForListsCtrl.text = cursor ?? ""; });
         if (cursor == null) break;
       }
       setState(() { progress = "Completed! $count merged"; });
@@ -2094,11 +2155,24 @@ class _BlockAllUsersInListTabState extends State<BlockAllUsersInListTab> {
           ]),
 
           TableRow(children: [
+            Text("Cursor: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Tooltip(message: "Keep it empty to start from teh first entry,\nor use the values that will be placed here to continue a merge\nthat was blocked because the list had more than 430 entries (Bluesky hard limit.)", child: 
+            SizedBox(width: 600, child: TextField(
+              controller: _cursorForListsCtrl,
+              keyboardType: TextInputType.multiline,
+              autocorrect: false,
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "Cursor to continue a previous merge, keep it empty if you want to start from zero.", prefixIcon: Icon(Icons.person)),
+            ))),
+          ]),
+
+          TableRow(children: [
             Text("Progress: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
             Text(progress)
           ]),
+
+
         ],),
-                SizedBox(height: 20,),
+        SizedBox(height: 20,),
         Row(mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
           ElevatedButton(
@@ -2136,12 +2210,16 @@ class _BlockAllUsersInListTabState extends State<BlockAllUsersInListTab> {
     setState(() { exception = ""; progress = "Blocking users in the list..."; });
     try {
       String? cursor;
+      if (_cursorForListsCtrl.text.isNotEmpty) {
+        cursor = _cursorForListsCtrl.text;
+      }
       int count = 0;
       core.AtUri uriList = core.AtUri(atUri);
       while (count < maxListEntries) {
         setState(() { exception = ""; progress = "Collecting users from the list... ($count)"; });
         final list = await bsky!.graph.getList(list: uriList, cursor: cursor, limit: 100);
         cursor = list.data.cursor;
+        setState(() { _cursorForListsCtrl.text = cursor ?? ""; });
         count += list.data.items.length;
         for (var user in list.data.items) {
           var _ = await bsky?.graph.block(did: user.subject.did, createdAt: DateTime.now());
@@ -2208,6 +2286,17 @@ class _UnblockAllUsersInListTabState extends State<UnblockAllUsersInListTab> {
           ]),
 
           TableRow(children: [
+            Text("Cursor: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
+            Tooltip(message: "Keep it empty to start from teh first entry,\nor use the values that will be placed here to continue a merge\nthat was blocked because the list had more than 430 entries (Bluesky hard limit.)", child: 
+            SizedBox(width: 600, child: TextField(
+              controller: _cursorForListsCtrl,
+              keyboardType: TextInputType.multiline,
+              autocorrect: false,
+              decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "Cursor to continue a previous merge, keep it empty if you want to start from zero.", prefixIcon: Icon(Icons.person)),
+            ))),
+          ]),
+
+          TableRow(children: [
             Text("Progress: ", textAlign: TextAlign.right,style:boldStyle), SizedBox(width: 10),
             Text(progress)
           ]),
@@ -2252,6 +2341,9 @@ class _UnblockAllUsersInListTabState extends State<UnblockAllUsersInListTab> {
     setState(() { exception = ""; progress = "Blocking users in the list..."; });
     try {
       String? cursor;
+      if (_cursorForListsCtrl.text.isNotEmpty) {
+        cursor = _cursorForListsCtrl.text;
+      }
       int count = 0;
       core.AtUri uriList = core.AtUri(atUri);
       while (count < maxListEntries) {
@@ -2276,6 +2368,7 @@ class _UnblockAllUsersInListTabState extends State<UnblockAllUsersInListTab> {
         if (blocks == null) break;
         setState(() { progress = "Unblocking users... (${didsUnblock.length})"; });
         cursor = blocks.data.cursor;
+        setState(() { _cursorForListsCtrl.text = cursor ?? ""; });
         count += blocks.data.blocks.length;
         for (var block in blocks.data.blocks) {
           for (var did in dids) {

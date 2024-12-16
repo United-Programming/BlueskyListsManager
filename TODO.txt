@@ -1,6 +1,7 @@
 Store the expiration of the session, and auto-reconnect using some sort of timer
 
 -------- DONE ------------------
+!Check if we create more than 430 records, in this case show the cursor and let people use the cursor after 5 mminutes to continue.
 !Add ability to removed saved credentials
 !Add themes
 !Add a way to save preferences (maxWhileValues, atUris for lists)
