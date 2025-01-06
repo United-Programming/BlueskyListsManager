@@ -223,7 +223,7 @@ String cleanHandle(String handle) {
   else if (handle.startsWith("https://bsky.app/profile/")) {handle = handle.substring(25);}
   else if (handle.startsWith("https://")) {handle = handle.substring(8);}
   handle = handle.replaceAll(" ", "");
-  if (!handle.contains('.')) return "$handle.bsky.social";
+  if (!handle.contains('.') && !handle.startsWith("did")) return "$handle.bsky.social";
   return handle;
 }
 
@@ -392,7 +392,7 @@ class _LoginTabState extends State<LoginTab> {
 
           ]),
           Spacer(flex: 2),
-          Row(children: [Text('Version 1.0.1 - 2024/12/16 - cpu@nafoeverywhere.org'), Spacer(flex: 5)])
+          Row(children: [Text('Version 1.0.2 - 2025/01/06 - CPU @nafoeverywhere.org'), Spacer(flex: 5)])
     ]))));
   }
 
@@ -1726,6 +1726,7 @@ class _AddUserToListTabState extends State<AddUserToListTab> {
     }
 
     int numDone = 0;
+    String errors = "";
 
     for (var handle in handles) {
       if (handle.trim().isEmpty) continue;
@@ -1733,6 +1734,7 @@ class _AddUserToListTabState extends State<AddUserToListTab> {
       handle = cleanHandle(handle);
       if (handle == "") {
         setState(() { exception = "Invalid handle: $forError"; });
+        errors += "Invalid handle: $forError; ";
         continue;
       }
 
@@ -1740,7 +1742,8 @@ class _AddUserToListTabState extends State<AddUserToListTab> {
 
       setState(() { exception = ""; progress = "Adding $handle..."; });
       try {
-        var did = (await bsky!.at.identity.resolveHandle(handle: handle)).data.did;
+        var did = handle;
+        if (!did.startsWith("did")) did = (await bsky!.at.identity.resolveHandle(handle: handle)).data.did;
         var now = getNow();
         var record = {
           r"$type": "app.bsky.graph.listitem",
@@ -1761,22 +1764,27 @@ class _AddUserToListTabState extends State<AddUserToListTab> {
         var msg = ex.toString();
         int pos = msg.lastIndexOf('4');
         if (pos!=-1) {
-          msg = "Invalid request: ${msg.substring(pos+3)}";
+          msg = "Invalid request:${msg.substring(pos+3)}: $handle";
         }
         setState(() { exception = msg; });
+        errors += "$msg; ";
       } catch(ex) {
         setState(() { exception = ex.toString(); });
+        errors += "${ex.toString()}; ";
       }
     }
 
     if (numDone == 0) {
-      setState(() { exception = "Please type a valid handle!"; });
+      if (errors.isEmpty) { setState(() { exception = "Please type a valid handle!"; }); }
+      else { setState(() { exception = errors; }); }
     }
     else if (alsoBlock) {
-      setState(() { progress = "$numDone Added and blocked"; });
+      if (errors.isNotEmpty) { setState(() { progress = "$numDone Added and blocked, with errors"; exception = errors; }); }
+      else { setState(() { progress = "$numDone Added and blocked"; }); }
     }
     else {
-      setState(() { progress = "$numDone Added"; });
+      if (errors.isNotEmpty) { setState(() { progress = "$numDone Added, with errors"; exception = errors; }); }
+      else { setState(() { progress = "$numDone Added"; }); }
     }
   }
 }
@@ -1897,7 +1905,8 @@ class _RemoveUserFromListTabState extends State<RemoveUserFromListTab> {
         setState(() { exception = "Invalid handle: $forError"; });
         continue;
       }
-      var did = (await bsky!.at.identity.resolveHandle(handle: handle)).data.did;
+      var did = handle;
+      if (!did.startsWith("did")) did = (await bsky!.at.identity.resolveHandle(handle: handle)).data.did;
       dids.add(did);
       didsUnblock.add(did);
     }
@@ -2083,7 +2092,8 @@ class _CheckIfUserIsInListTabState extends State<CheckIfUserIsInListTab> {
 
     setState(() { exception = ""; progress = "Checking if $handle is in the list..."; });
     try {
-      var did = (await bsky!.at.identity.resolveHandle(handle: handle)).data.did;
+      var did = handle;
+      if (!did.startsWith("did")) did = (await bsky!.at.identity.resolveHandle(handle: handle)).data.did;
       core.AtUri uriList = core.AtUri(atUri);
       String? cursor;
       int count = 0;
